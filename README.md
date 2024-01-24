@@ -3,8 +3,8 @@ AdobeGenp Adobe破解 Adobe CC 2019/2020/2021/2022/2023 GenP Universal Patch 3.0
 
 
 
-    Last V 3.2.1
-    https://www.mediafire.com/file/und33gyx1nex79x/Adobe-GenP-3.2.1.rar/file
+    Last V 3.2.2
+    https://www.mediafire.com/file/w3ovotzwrbbpf29/Adobe_GenP_3.2.2__CGP_Community_Edition_.7z/file
 
 
 
