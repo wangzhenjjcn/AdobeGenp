@@ -3,13 +3,14 @@ AdobeGenp Adobe破解 Adobe CC 2019/2020/2021/2022/2023/2024 GenP Universal Patc
 
 
 
-    Last V 3.3
-    https://www.mediafire.com/file/5pj5pt3xed1k0dm/Adobe-GenP-3.3_beta.rar/file
+    Last V 3.4.9 / 3.3.2
+    https://www.mediafire.com/file/9ngtwj2wcjjqixs/Adobe+GenP+3.4.9+(overall+fixes).zip/file
 
 
 
 Adobe universal patch. Can patch 2019/2020/2021-2024 adobe product.
 
+GenP Universal Patch 3.4.9
 
 How to use GenP:
 
@@ -21,13 +22,23 @@ Press ‘Custom path’ – select folder that you want [depending upon the app 
 Press ‘Search Files’ – wait until GenP finds all files.
 Press ‘Pill Button’ – wait until GenP do it’s job.
 
- 
+3.3.2  Changelog:
+
+Added patch for a home screen issue in photoshop.
+
+
 
 Changelog:
 
-New config.dll file by Monkrus/MikeVirtual.
-Solution: Added another pattern for patching to the files: Registration.dll (Pr, Me, Ru), AfterFXLib.dll, Adobe Media Encoder.exe, Character Animator.exe, AuUI.dll and Animate.exe.
+New changes on GenP 3.4.9 (Reddit version)
 
++ Added Maxon Cinema 4D.
++ Fixed Adobe Acrobat.
++ Added hybrid Windows Firewall + Hosts pop-up blocker.
++ General stability improvements.
++ Minor UI improvements.
++ Added custom paths for the Adobe Creative Cloud.
++ Fixed Adobe Xd. [added RunasTI (RunAsTrustedInstaller) to be able to patch UWP apps]
++ Fixed Adobe Illustrator (Pre-release).
  
 
-Thanks to E1uSiv3 sharing
