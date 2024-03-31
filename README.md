@@ -1,10 +1,10 @@
 # AdobeGenp
-AdobeGenp Adobe破解 Adobe CC 2019/2020/2021/2022/2023/2024 GenP Universal Patch 3.3 December 25, 2023 - Software  from https://www.cybermania.ws/apps/genp-universal-patch/
+AdobeGenp Adobe破解 Adobe CC 2019/2020/2021/2022/2023/2024 GenP Universal Patch  - Software  from https://www.cybermania.ws/apps/genp-universal-patch/
 
 
 
-    Last V 3.4.9 / 3.3.2
-    https://www.mediafire.com/file/9ngtwj2wcjjqixs/Adobe+GenP+3.4.9+(overall+fixes).zip/file
+    Last V 3.4.12
+    https://github.com/wangzhenjjcn/AdobeGenp/blob/main/LastEXE/AdobeGenP-3.4.12.exe
 
 
 
@@ -22,23 +22,19 @@ Press ‘Custom path’ – select folder that you want [depending upon the app 
 Press ‘Search Files’ – wait until GenP finds all files.
 Press ‘Pill Button’ – wait until GenP do it’s job.
 
-3.3.2  Changelog:
 
-Added patch for a home screen issue in photoshop.
+New changes on GenP 3.4.12 (Reddit version)
 
++Fixed Cinema 4D rendering.
++Improved InDesign/InCopy medicine.
++Fixed crashing on startup (may require you to open GenP twice if it’s your first time running it).
++Added automatic patching for the CXP JavaScript files to remove the ‘Trial Expired | Buy Now’ prompt.
+— Press ‘Patch CC’ to apply the patches.
++General stability fixes and improvements.
 
+– All products are confirmed to work, including Pre-release and Beta versions.
+— … except for Photoshop Express, Premiere Rush and Lightroom. 
 
-Changelog:
-
-New changes on GenP 3.4.9 (Reddit version)
-
-+ Added Maxon Cinema 4D.
-+ Fixed Adobe Acrobat.
-+ Added hybrid Windows Firewall + Hosts pop-up blocker.
-+ General stability improvements.
-+ Minor UI improvements.
-+ Added custom paths for the Adobe Creative Cloud.
-+ Fixed Adobe Xd. [added RunasTI (RunAsTrustedInstaller) to be able to patch UWP apps]
-+ Fixed Adobe Illustrator (Pre-release).
- 
+– IF YOU STILL HAVE ISSUES OPENING GenP AFTER THIS UPDATE, DELETE THE ‘RunAsTI.exe’ FILE.
+— You will lose the ability to patch Adobe Xd by doing this tho.
 
