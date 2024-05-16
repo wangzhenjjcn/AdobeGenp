@@ -1,5 +1,5 @@
 # AdobeGenp
-AdobeGenp Adobe破解 Adobe CC 2019/2020/2021/2022/2023/2024 GenP Universal Patch  - Software  from https://www.cybermania.ws/apps/genp-universal-patch/
+AdobeGenp Adobe Adobe CC 2019/2020/2021/2022/2023/2024 GenP Universal Patch  - Software  from https://www.cybermania.ws/apps/genp-universal-patch/
 
 
 
