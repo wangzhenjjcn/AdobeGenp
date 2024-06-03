@@ -10,6 +10,7 @@
 #AutoIt3Wrapper_Res_CompanyName=AdobeGenP
 #AutoIt3Wrapper_Res_LegalCopyright=AdobeGenP
 #AutoIt3Wrapper_Res_LegalTradeMarks=AdobeGenP
+#AutoIt3Wrapper_Run_Tidy=y
 #AutoIt3Wrapper_Run_Au3Stripper=y
 #EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
 
@@ -17,6 +18,9 @@
 #include <ProgressConstants.au3>
 #include <WindowsConstants.au3>
 #include <GUIConstantsEx.au3>
+#include <GUITab.au3>
+#include <ButtonConstants.au3>
+#include <MsgBoxConstants.au3>
 #include <EditConstants.au3>
 #include <GuiListView.au3>
 #include <WinAPIProc.au3>
@@ -24,7 +28,7 @@
 
 AutoItSetOption("GUICloseOnESC", 0)  ;1=ESC closes, 0=ESC won't close
 
-Global Const $g_AppWndTitle = "AdobeGenP", $g_AppVersion = "Original version by uncia - CGP Community Edition - v3.3 beta"
+Global Const $g_AppWndTitle = "AdobeGenP", $g_AppVersion = "Original version by uncia - CGP Community Edition - v3.3.10"
 
 If _Singleton($g_AppWndTitle, 1) = 0 Then
 	Exit
@@ -36,7 +40,10 @@ Global $FilesToPatch[0][1], $FilesToPatchNull[0][1]
 Global $FilesToRestore[0][1], $fFilesListed = 0
 Global $MyhGUI, $hTab, $hMainTab, $hLogTab, $idMsg, $idListview, $g_idListview, $idButtonSearch, $idButtonStop
 Global $idButtonCustomFolder, $idBtnCure, $idBtnDeselectAll, $ListViewSelectFlag = 1
-Global $idBtnBlockPopUp, $idBtnRunasTI, $idMemo, $timestamp, $idLog, $idBtnRestore, $idBtnCopyLog
+Global $idBtnBlockPopUp, $idBtnRunasTI, $idMemo, $timestamp, $idLog, $idBtnRestore, $idBtnCopyLog, $idFindACC
+Global $idOnlyAdobeFolders, $idBtnSaveOptions, $idUseCustomDomains, $idCustomDomainsInput
+Global $hPopupTab, $idBtnDestroyAGS, $idBtnEditHosts, $idLabelEditHosts, $sEditHostsText, $idBtnRestoreHosts
+Global $sDestroyAGSText, $idLabelDestroyAGS, $sCleanFirewallText, $idLabelCleanFirewall, $idBtnCleanFirewall, $idBtnOpenWF, $idBtnEnableDisableWF
 
 Global $sINIPath = @ScriptDir & "\config.ini"
 If Not FileExists($sINIPath) Then
@@ -59,6 +66,15 @@ Global $MyFileToParse = "", $MyFileToParsSweatPea = "", $MyFileToParseEaclient =
 Global $sz_type, $bFoundAcro32 = False, $aSpecialFiles, $sSpecialFiles = "|"
 Global $ProgressFileCountScale, $FileSearchedCount
 
+Global $bFindACC = IniRead($sINIPath, "Options", "FindACC", "1")
+Global $bOnlyAdobeFolders = IniRead($sINIPath, "Options", "OnlyAdobeFolder", "1")
+Global $bUseCustomDomains = IniRead($sINIPath, "Options", "UseCustomDomains", "0")
+Global $sCustomDomains = IniRead($sINIPath, "Options", "CustomDomains", "'8eptecerpq.adobestats.io','xa8g202i4u.adobestats.io'")
+If $sCustomDomains = "" Then
+	IniWrite($sINIPath, "Options", "CustomDomains", "'8eptecerpq.adobestats.io','xa8g202i4u.adobestats.io'")
+	$sCustomDomains = "'8eptecerpq.adobestats.io','xa8g202i4u.adobestats.io'"
+EndIf
+
 Local $tTargetFileList_Adobe = IniReadSection($sINIPath, "TargetFiles")
 Global $TargetFileList_Adobe[0]
 If Not @error Then
@@ -80,7 +96,30 @@ GUIRegisterMsg($WM_COMMAND, "WM_COMMAND")
 
 MainGui()
 
+Local $bHostsbakExists = False
+If FileExists("C:\Windows\System32\drivers\etc\hosts.bak") Then
+	GUICtrlSetState($idBtnRestoreHosts, $GUI_ENABLE)
+	$bHostsbakExists = True
+EndIf
+
 While 1
+
+	Local $bHostsbakExistsNow
+	If FileExists("C:\Windows\System32\drivers\etc\hosts.bak") Then
+		$bHostsbakExistsNow = True
+	Else
+		$bHostsbakExistsNow = False
+	EndIf
+
+	If $bHostsbakExistsNow <> $bHostsbakExists Then
+		If $bHostsbakExistsNow Then
+			GUICtrlSetState($idBtnRestoreHosts, $GUI_ENABLE)
+		Else
+			GUICtrlSetState($idBtnRestoreHosts, $GUI_DISABLE)
+		EndIf
+		$bHostsbakExists = $bHostsbakExistsNow
+	EndIf
+
 	$idMsg = GUIGetMsg()
 
 	Select
@@ -157,7 +196,18 @@ While 1
 			$timestamp = TimerInit()
 
 			Local $FileCount
-			Local $aSize = DirGetSize($MyDefPath, $DIR_EXTENDED)     ; extended mode
+
+			If $bFindACC = 1 Then
+				Local $sAppsPanelDir = EnvGet('ProgramFiles(x86)') & "\Common Files\Adobe"
+				Local $aSize = DirGetSize($sAppsPanelDir, $DIR_EXTENDED)     ; extended mode
+				If UBound($aSize) >= 2 Then
+					$FileCount = $aSize[1]
+					RecursiveFileSearch($sAppsPanelDir, 0, $FileCount)   ;Search through all files and folders
+					ProgressWrite(0)
+				EndIf
+			EndIf
+
+			$aSize = DirGetSize($MyDefPath, $DIR_EXTENDED)     ; extended mode
 			If UBound($aSize) >= 2 Then
 				$FileCount = $aSize[1]
 				$ProgressFileCountScale = 100 / $FileCount
@@ -166,16 +216,6 @@ While 1
 				RecursiveFileSearch($MyDefPath, 0, $FileCount)   ;Search through all files and folders
 				Sleep(100)
 				ProgressWrite(0)
-			EndIf
-
-			If $MyDefPath = "C:\Program Files" Or $MyDefPath = "C:\Program Files\Adobe" Then
-				Local $sAppsPanelDir = EnvGet('ProgramFiles(x86)') & "\Common Files\Adobe"
-				$aSize = DirGetSize($sAppsPanelDir, $DIR_EXTENDED)     ; extended mode
-				If UBound($aSize) >= 2 Then
-					$FileCount = $aSize[1]
-					RecursiveFileSearch($sAppsPanelDir, 0, $FileCount)   ;Search through all files and folders
-					ProgressWrite(0)
-				EndIf
 			EndIf
 
 			FillListViewWithFiles()
@@ -389,6 +429,52 @@ While 1
 		Case $idMsg = $idBtnCopyLog
 			SendToClipBoard()
 
+		Case $idMsg = $idFindACC
+			If _IsChecked($idFindACC) Then
+				$bFindACC = 1
+			Else
+				$bFindACC = 0
+			EndIf
+
+		Case $idMsg = $idOnlyAdobeFolders
+			If _IsChecked($idOnlyAdobeFolders) Then
+				$bOnlyAdobeFolders = 1
+			Else
+				$bOnlyAdobeFolders = 0
+			EndIf
+
+		Case $idMsg = $idUseCustomDomains
+			GUICtrlSetState($idBtnBlockPopUp, 64)
+			If _IsChecked($idUseCustomDomains) Then
+				$bUseCustomDomains = 1
+				If Not StringInStr(GUICtrlRead($idCustomDomainsInput), ".adobestats.io") Then
+					GUICtrlSetData($idCustomDomainsInput, "8eptecerpq.adobestats.io" & @CRLF & "xa8g202i4u.adobestats.io")
+				EndIf
+			Else
+				$bUseCustomDomains = 0
+			EndIf
+
+		Case $idMsg = $idBtnSaveOptions
+			SaveOptionsToConfig()
+
+		Case $idMsg = $idBtnDestroyAGS
+			DestroyAGS()
+
+		Case $idMsg = $idBtnEditHosts
+			EditHosts()
+
+		Case $idMsg = $idBtnRestoreHosts
+			RestoreHosts()
+
+		Case $idMsg = $idBtnCleanFirewall
+			CleanFirewall()
+
+		Case $idMsg = $idBtnOpenWF
+			OpenWF()
+
+		Case $idMsg = $idBtnEnableDisableWF
+			EnableDisableWFRules()
+
 	EndSelect
 WEnd
 
@@ -469,6 +555,105 @@ Func MainGui()
 	GUICtrlSetResizing(-1, $GUI_DOCKBOTTOM)
 	GUICtrlCreateTabItem("")
 
+	$hOptionsTab = GUICtrlCreateTabItem("Options")
+
+	$idFindACC = GUICtrlCreateCheckbox("Always search for ACC", 10, 50, 300, 25, BitOR($BS_AUTOCHECKBOX, $BS_LEFT))
+	If $bFindACC = 1 Then
+		GUICtrlSetState($idFindACC, $GUI_CHECKED)
+	Else
+		GUICtrlSetState($idFindACC, $GUI_UNCHECKED)
+	EndIf
+	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
+
+	$idOnlyAdobeFolders = GUICtrlCreateCheckbox("Only find files in Adobe or Acrobat folders", 10, 90, 300, 25, BitOR($BS_AUTOCHECKBOX, $BS_LEFT))
+	If $bOnlyAdobeFolders = 1 Then
+		GUICtrlSetState($idOnlyAdobeFolders, $GUI_CHECKED)
+	Else
+		GUICtrlSetState($idOnlyAdobeFolders, $GUI_UNCHECKED)
+	EndIf
+	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
+
+	$idUseCustomDomains = GUICtrlCreateCheckbox("Only use domains below for pop-up blocker", 10, 130, 300, 25, BitOR($BS_AUTOCHECKBOX, $BS_LEFT))
+	If $bUseCustomDomains = 1 Then
+		GUICtrlSetState($idUseCustomDomains, $GUI_CHECKED)
+	Else
+		GUICtrlSetState($idUseCustomDomains, $GUI_UNCHECKED)
+	EndIf
+	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
+
+	$idCustomDomainsInput = GUICtrlCreateInput("Custom Domains", 10, 155, 288, 150, BitOR($ES_MULTILINE, $ES_LEFT, $ES_WANTRETURN))
+	GUICtrlSetResizing(-1, $GUI_DOCKVCENTER)
+	GUICtrlSetData($idCustomDomainsInput, StringReplace(StringReplace($sCustomDomains, ",", @CRLF), "'", ""))
+
+	$idBtnSaveOptions = GUICtrlCreateButton("Save Options", 247, 630, 100, 30)
+	GUICtrlSetTip(-1, "Save Options to config.ini")
+	GUICtrlSetImage(-1, "imageres.dll", 5358, 0)
+	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
+	GUICtrlCreateTabItem("")
+
+	$hPopupTab = GUICtrlCreateTabItem("Pop-up Tools")
+
+	$sDestroyAGSText = "ADOBE GENUINE SERVICES REMOVAL" & @CRLF & @CRLF & _
+			"Many times, the unlicensed pop-up you are getting is due to AGS." & @CRLF & _
+			"You really don't want it on your system spying on you. So, just nuke it!" & @CRLF & _
+			"This runs a quick script to stop and remove the services and files associated with AGS." & @CRLF & _
+			"Before you go blocking pop-ups, make sure you need to. Nuke AGS. See if pop-up is gone ;)"
+
+	$idLabelDestroyAGS = GUICtrlCreateLabel($sDestroyAGSText, 10, 50, 575, 90, $ES_CENTER)
+	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
+
+	$idBtnDestroyAGS = GUICtrlCreateButton("Destroy AGS", 235, 150, 140, 30)
+	GUICtrlSetTip(-1, "Totally remove AGS from your system.")
+	;GUICtrlSetImage(-1, "imageres.dll", 167, 0)
+	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
+
+	$sEditHostsText = "EDIT HOSTS" & @CRLF & @CRLF & _
+			"Before running the pop-up blocker, you need a clean hosts file. (No adobe rules!)" & @CRLF & _
+			"Be very careful editing hosts file. You'll find it at C:\Windows\System32\drivers\etc\hosts." & @CRLF & _
+			"Disable rules by putting a # in front of the rule (# comments the rule out). If things work as expected, remove the rule." & @CRLF & _
+			"Be sure to save the hosts file when done editing. We make a backup just in case you mess up ;)"
+
+	$idLabelEditHosts = GUICtrlCreateLabel($sEditHostsText, 10, 200, 575, 90, $ES_CENTER)
+	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
+
+	$idBtnEditHosts = GUICtrlCreateButton("Edit Hosts", 155, 300, 140, 30)
+	GUICtrlSetTip(-1, "Open hosts file for editing in notepad.")
+	;GUICtrlSetImage(-1, "imageres.dll", 15, 0)
+	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
+
+	$idBtnRestoreHosts = GUICtrlCreateButton("Restore Hosts", 315, 300, 140, 30)
+	GUICtrlSetState($idBtnRestoreHosts, $GUI_DISABLE)
+	GUICtrlSetTip(-1, "Restore hosts backup. Available after editing hosts file.")
+	;GUICtrlSetImage(-1, "imageres.dll", 15, 0)
+	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
+
+	$sCleanFirewallText = "CLEAN WINDOWS FIREWALL" & @CRLF & @CRLF & _
+			"If you have used GenP in the past, or experience problems with internet access" & @CRLF & _
+			"this will remove any OUTBOUND BLOCK rules that GenP created." & @CRLF & _
+			"This enables you know you have a clean start, and allows ACC correct access for updates." & @CRLF & _
+			"You can always run pop-up blocker to add rules back if necessary ;)"
+
+	$idLabelCleanFirewall = GUICtrlCreateLabel($sCleanFirewallText, 10, 350, 575, 90, $ES_CENTER)
+	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
+
+
+	$idBtnCleanFirewall = GUICtrlCreateButton("Clean Firewall", 235, 450, 140, 30)
+	GUICtrlSetTip(-1, "Remove all Windows Firewall Rules created by GenP.")
+	;GUICtrlSetImage(-1, "imageres.dll", 15, 0)
+	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
+
+	$idBtnOpenWF = GUICtrlCreateButton("Open Windows Firewall", 155, 500, 140, 30)
+	GUICtrlSetTip(-1, "Open Windows Firewall to check settings.")
+	;GUICtrlSetImage(-1, "imageres.dll", 15, 0)
+	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
+
+	$idBtnEnableDisableWF = GUICtrlCreateButton("Enable/Disable Rules", 315, 500, 140, 30)
+	GUICtrlSetTip(-1, "Toggle state of Windows Firewall OUTBOUND BLOCK rules with ADOBE in their name.")
+	;GUICtrlSetImage(-1, "imageres.dll", 15, 0)
+	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
+
+	GUICtrlCreateTabItem("")
+
 	$hLogTab = GUICtrlCreateTabItem("Log")
 	$idMemo = GUICtrlCreateEdit("", 10, 35, 575, 555, BitOR($ES_READONLY, $ES_CENTER, $WS_DISABLED))
 	GUICtrlSetResizing(-1, $GUI_DOCKVCENTER)
@@ -529,15 +714,31 @@ Func RecursiveFileSearch($INSTARTDIR, $DEPTH, $FileCount)
 ;~ 				Return $targetDepth
 		Else
 			$IPATH = $STARTDIR & $NEXT
-			Local $FileNameCropped
+			Local $FileNameCropped, $PathToCheck
 			If (IsArray($TargetFileList_Adobe)) Then
 				For $AdobeFileTarget In $TargetFileList_Adobe
+
+					If StringInStr($AdobeFileTarget, "$") Then
+						;  split the string at the $ sign
+						$AdobeFileTarget = StringSplit($AdobeFileTarget, "$", $STR_ENTIRESPLIT)
+						$PathToCheck = $AdobeFileTarget[2]
+						$AdobeFileTarget = $AdobeFileTarget[1]
+
+						;  ConsoleWrite($AdobeFileTarget & " / " & $PathToCheck & @CRLF)
+
+					EndIf
 					$FileNameCropped = StringSplit(StringLower($IPATH), StringLower($AdobeFileTarget), $STR_ENTIRESPLIT)
 					If @error <> 1 Then
 						If Not StringInStr($IPATH, ".bak") Then
 							;_ArrayAdd( $FilesToPatch, $DEPTH & " - " & $IPATH )
-							If StringInStr($IPATH, "Adobe") Or StringInStr($IPATH, "Acrobat") Then
-								_ArrayAdd($FilesToPatch, $IPATH)
+							If (StringInStr($IPATH, "Adobe") Or StringInStr($IPATH, "Acrobat")) Or $bOnlyAdobeFolders = 0 Then
+								If $PathToCheck = "" Then
+									_ArrayAdd($FilesToPatch, $IPATH)
+								Else
+									If StringInStr($IPATH, $PathToCheck) Then
+										_ArrayAdd($FilesToPatch, $IPATH)
+									EndIf
+								EndIf
 							EndIf
 						Else
 							_ArrayAdd($FilesToRestore, $IPATH)
@@ -546,6 +747,7 @@ Func RecursiveFileSearch($INSTARTDIR, $DEPTH, $FileCount)
 						; File Found and stored - Quit search in current dir
 ;~ 					return $RecursiveFileSearch_WhenFoundRaiseToLevel
 					EndIf
+					$PathToCheck = ""
 				Next
 			EndIf
 		EndIf
@@ -655,12 +857,12 @@ Func ToggleLog($bShow)
 EndFunc   ;==>ToggleLog
 
 Func SendToClipBoard()
-	If BitAND(GUICtrlGetState($idMemo),$GUI_HIDE) = $GUI_HIDE Then
+	If BitAND(GUICtrlGetState($idMemo), $GUI_HIDE) = $GUI_HIDE Then
 		ClipPut(GUICtrlRead($idLog))
 	Else
 		ClipPut(GUICtrlRead($idMemo))
 	EndIf
-EndFunc
+EndFunc   ;==>SendToClipBoard
 
 Func GUICtrlSetDataEx($hWnd, $sText, $bTS)
 	If Not IsHWnd($hWnd) Then $hWnd = GUICtrlGetHandle($hWnd)
@@ -1005,10 +1207,14 @@ EndFunc   ;==>RestoreFile
 
 Func BlockPopUp()
 	GUICtrlSetState($idBtnBlockPopUp, 128)
+	_GUICtrlTab_SetCurFocus($hTab, 3)
+
 	MemoWrite(@CRLF & "Checking for Internet connectivity" & @CRLF & "---" & @CRLF & "Please wait...")
 	Local $sCmdInfo = "PowerShell Set-ExecutionPolicy Bypass -scope Process -Force;(Get-NetRoute | Where-Object DestinationPrefix -eq '0.0.0.0/0' | Get-NetIPInterface | Where-Object ConnectionState -eq 'Connected') -ne $null"
 	Local $iPID = Run($sCmdInfo, "", @SW_HIDE, BitOR($STDERR_CHILD, $STDOUT_CHILD))
+	Local $sIPs = ""
 	Local $sOutput = ""
+	Local $bAbort = False
 	While 1
 		$sOutput &= StdoutRead($iPID)
 		If @error Then ExitLoop
@@ -1017,7 +1223,12 @@ Func BlockPopUp()
 	;MsgBox(0, "", $sOutput)
 	If StringReplace($sOutput, @CRLF, "") = "True" Then
 		MemoWrite(@CRLF & "Searching for IP Addresses" & @CRLF & "---" & @CRLF & "Please wait...")
-		$sCmdInfo = "PowerShell Set-ExecutionPolicy Bypass -scope Process -Force;$ips=@();$soa=(Resolve-DnsName -Name adobe.io -Type SOA).PrimaryServer;Do{$ip=(Resolve-DnsName -Name adobe.io -Server $soa).IPAddress;$ips+=$ip;$ips=$ips|Select -Unique|Sort-Object}While($ips.Count -lt 8);Do{$ip=(Resolve-DnsName -Name 3u6k9as4bj.adobestats.io).IPAddress;$ips+=$ip;$ips=$ips|Select -Unique|Sort-Object}While($ips.Count -lt 12);$list=$ips -join ',';$list"
+		If $bUseCustomDomains = 1 Then
+			$sCustomDomains = "'" & StringReplace(GUICtrlRead($idCustomDomainsInput), @CRLF, "','") & "'"
+			$sCmdInfo = "PowerShell Set-ExecutionPolicy Bypass -scope Process -Force;$ips=@();$domains=@(" & $sCustomDomains & ");$soa=(Resolve-DnsName -Name ic.adobe.io -Type SOA).PrimaryServer;Do{$ip=(Resolve-DnsName -Name ic.adobe.io -Server $soa).IPAddress;$ips+=$ip;If($ip -eq '0.0.0.0'){Break};If($ip -eq '127.0.0.1'){Break};$ips=$ips|Select-Object -Unique|Sort-Object}While($ips.Count -lt 8);$domains.foreach({$ip=(Resolve-DnsName -Name $_).IPAddress;$ips+=$ip});$ips=$ips|Select-Object -Unique|Sort-Object;$list=$ips -join ',';$list;"
+		Else
+			$sCmdInfo = "PowerShell Set-ExecutionPolicy Bypass -scope Process -Force;$path = Join-Path -Path $env:TEMP -ChildPath pihole.txt;Invoke-WebRequest 'https://a.dove.isdumb.one/pihole.txt' -OutFile $path;$ips=@();$soa=(Resolve-DnsName -Name ic.adobe.io -Type SOA).PrimaryServer;Do{$ip=(Resolve-DnsName -Name ic.adobe.io -Server $soa).IPAddress;$ips+=$ip;If($ip -eq '0.0.0.0'){Break};If($ip -eq '127.0.0.1'){Break};$ips=$ips|Select-Object -Unique|Sort-Object}While($ips.Count -lt 8);[System.IO.File]::ReadLines($path) | ForEach-Object {if($_ -Match 'adobestats.io'){$ip=(Resolve-DnsName -Name $_).IPAddress;$ips+=$ip;}};Remove-Item $path;$ips=$ips|Select-Object -Unique|Sort-Object;$list=$ips -join ',';$list;"
+		EndIf
 		$iPID = Run($sCmdInfo, "", @SW_HIDE, BitOR($STDERR_CHILD, $STDOUT_CHILD))
 		$sOutput = ""
 		While 1
@@ -1025,16 +1236,49 @@ Func BlockPopUp()
 			If @error Then ExitLoop
 		WEnd
 		ProcessWaitClose($iPID)
-		MemoWrite(@CRLF & "Creating Windows Firewall Rule" & @CRLF & "---" & @CRLF & "Blocking:" & @CRLF & StringReplace($sOutput, @CRLF, ""))
-		$sCmdInfo = "netsh advfirewall firewall delete rule name=""Adobe Unlicensed Pop-up"""
+		$sIPs = StringReplace($sOutput, @CRLF, "")
+		If StringInStr($sIPs, "0.0.0.0") Or StringInStr($sIPs, "127.0.0.1") Then
+			LogWrite(1, "Detected 0.0.0.0/127.0.0.1 in IP address list. This means your host file contains Adobe domains. Please remove them and try again. No changes have been made to firewall rules!" & @CRLF)
+			$bAbort = True
+			ToggleLog(1)
+		EndIf
+		If $sIPs = "" Then
+			LogWrite(1, "Something went wrong! No Genuine IP addresses found. This means your host file contains Adobe rules like 127.0.0.1 ic.adobe.io. Please remove them and try again. No changes have been made to firewall rules!" & @CRLF)
+			$bAbort = True
+			ToggleLog(1)
+		EndIf
+		$sCmdInfo = "PowerShell Set-ExecutionPolicy Bypass -scope Process -Force;$fws = Get-CimInstance -ClassName FirewallProduct -Namespace 'root\SecurityCenter2';if(!$fws){Write-Output 'Windows'}else{$fws | ForEach-Object {Write-Output $_.displayName}}"
 		$iPID = Run($sCmdInfo, "", @SW_HIDE, BitOR($STDERR_CHILD, $STDOUT_CHILD))
+		$sOutput = ""
+		While 1
+			$sOutput &= StdoutRead($iPID)
+			If @error Then ExitLoop
+		WEnd
 		ProcessWaitClose($iPID)
-		$sCmdInfo = "netsh advfirewall firewall add rule name=""Adobe Unlicensed Pop-up"" dir=out action=block remoteip=""" & StringReplace($sOutput, @CRLF, "") & """"
-		$iPID = Run($sCmdInfo, "", @SW_HIDE, BitOR($STDERR_CHILD, $STDOUT_CHILD))
-		ProcessWaitClose($iPID)
-		MemoWrite(@CRLF & "Added Windows Firewall Rule" & @CRLF & "---" & @CRLF & "Blocking:" & @CRLF & StringReplace($sOutput, @CRLF, ""))
+		If StringReplace($sOutput, @CRLF, "") = "Windows" Then
+			MemoWrite(@CRLF & "Creating Windows Firewall Rule" & @CRLF & "---" & @CRLF & "Blocking:" & @CRLF & $sIPs)
+
+			If $bAbort = False Then
+				$sCmdInfo = "netsh advfirewall firewall delete rule name=""Adobe Unlicensed Pop-up"""
+				$iPID = Run($sCmdInfo, "", @SW_HIDE, BitOR($STDERR_CHILD, $STDOUT_CHILD))
+				ProcessWaitClose($iPID)
+				$sCmdInfo = "netsh advfirewall firewall add rule name=""Adobe Unlicensed Pop-up"" dir=out action=block remoteip=""" & $sIPs & """"
+				$iPID = Run($sCmdInfo, "", @SW_HIDE, BitOR($STDERR_CHILD, $STDOUT_CHILD))
+				ProcessWaitClose($iPID)
+				LogWrite(1, "Windows Firewall Rule added, blocking:" & @CRLF & @CRLF & StringReplace($sIPs, ",", @CRLF) & @CRLF)
+			EndIf
+			ToggleLog(1)
+		Else
+			If $bAbort = False Then
+				LogWrite(1, "Detected 3rd party firewall: " & $sOutput & "---" & @CRLF & "This will disable Windows Firewall, so you will have to manually create an OUTBOUND rule in " & StringReplace($sOutput, @CRLF, "") & " to block the following IP addresses: " & @CRLF & @CRLF & StringReplace($sIPs, ",", @CRLF) & @CRLF)
+			Else
+				LogWrite(0, "Detected 3rd party firewall: " & $sOutput & "---" & @CRLF & "This will disable Windows Firewall, so you will have to manually create an OUTBOUND rule in " & StringReplace($sOutput, @CRLF, "") & " to block pop-ups from Adobe domains." & @CRLF)
+			EndIf
+			ToggleLog(1)
+		EndIf
 	Else
-		MemoWrite(@CRLF & "No Internet Connectivity" & @CRLF & "---" & @CRLF & "Please check your Internet connection and try again.")
+		LogWrite(1, "No Internet Connectivity" & @CRLF & "---" & @CRLF & "Powershell was unable to connect to the Internet to fetch current IP addresses. Check you are not blocking it with a firewall." & @CRLF)
+		ToggleLog(1)
 		GUICtrlSetState($idBtnBlockPopUp, 64)
 	EndIf
 EndFunc   ;==>BlockPopUp
@@ -1346,3 +1590,171 @@ Func ReplaceToArray($sParam)
 	Next
 	Return $aReturn
 EndFunc   ;==>ReplaceToArray
+
+Func _IsChecked($idControlID)
+	Return BitAND(GUICtrlRead($idControlID), $GUI_CHECKED) = $GUI_CHECKED
+EndFunc   ;==>_IsChecked
+
+
+Func SaveOptionsToConfig()
+
+	If _IsChecked($idFindACC) Then
+		IniWrite($sINIPath, "Options", "FindACC", "1")
+	Else
+		IniWrite($sINIPath, "Options", "FindACC", "0")
+	EndIf
+	If _IsChecked($idOnlyAdobeFolders) Then
+		IniWrite($sINIPath, "Options", "OnlyAdobeFolders", "1")
+	Else
+		IniWrite($sINIPath, "Options", "OnlyAdobeFolders", "0")
+	EndIf
+	If _IsChecked($idUseCustomDomains) Then
+		IniWrite($sINIPath, "Options", "UseCustomDomains", "1")
+	Else
+		IniWrite($sINIPath, "Options", "UseCustomDomains", "0")
+	EndIf
+	If Not StringInStr(GUICtrlRead($idCustomDomainsInput), ".adobestats.io") Then
+		IniWrite($sINIPath, "Options", "CustomDomains", "'8eptecerpq.adobestats.io','xa8g202i4u.adobestats.io'")
+		GUICtrlSetData($idCustomDomainsInput, "8eptecerpq.adobestats.io" & @CRLF & "xa8g202i4u.adobestats.io")
+		$sCustomDomains = "'8eptecerpq.adobestats.io','xa8g202i4u.adobestats.io'"
+	Else
+		IniWrite($sINIPath, "Options", "CustomDomains", """'" & StringReplace(GUICtrlRead($idCustomDomainsInput), @CRLF, "','") & "'""")
+	EndIf
+
+EndFunc   ;==>SaveOptionsToConfig
+
+Func DestroyAGS()
+	GUICtrlSetState($idBtnDestroyAGS, 128)
+	_GUICtrlTab_SetCurFocus($hTab, 3)
+
+	MemoWrite(@CRLF & "Removing AGS from this Computer" & @CRLF & "---" & @CRLF & "Please wait...")
+
+	$sCmdInfo = "PowerShell Set-ExecutionPolicy Bypass -scope Process -Force;"
+
+	$sCmdInfo &= "Stop-Process -Name ""AGMService"" -Force -ErrorAction SilentlyContinue;"
+	$sCmdInfo &= "Stop-Process -Name ""AGSService"" -Force -ErrorAction SilentlyContinue;"
+	$sCmdInfo &= "Remove-Item -Path ""C:\Program Files (x86)\Common Files\Adobe\AdobeGCClient"" -Recurse -Force -ErrorAction SilentlyContinue;"
+	$sCmdInfo &= "Remove-Item -Path ""C:\Program Files (x86)\Common Files\Adobe\OOBE\PDApp\AdobeGCClient"" -Recurse -Force -ErrorAction SilentlyContinue;"
+	$sCmdInfo &= "sc.exe delete ""AGMService"";"
+	$sCmdInfo &= "sc.exe delete ""AGSService"";"
+	$sCmdInfo &= "Remove-Item -Path ""C:\Users\Public\Documents\AdobeGCData"" -Recurse -Force -ErrorAction SilentlyContinue;"
+	$sCmdInfo &= "Remove-Item -Path ""C:\Windows\System32\Tasks\AdobeGCInvoker-1.0"" -Force -ErrorAction SilentlyContinue;"
+	$sCmdInfo &= "Remove-Item -Path ""C:\Windows\System32\Tasks_Migrated\AdobeGCInvoker-1.0"" -Force -ErrorAction SilentlyContinue;"
+	$sCmdInfo &= "Remove-Item -Path ""C:\Program Files (x86)\Adobe\Adobe Creative Cloud\Utils\AdobeGenuineValidator.exe"" -Force -ErrorAction SilentlyContinue;"
+	$sCmdInfo &= "Remove-Item -Path ""C:\Windows\Temp\adobegc.log"" -Force -ErrorAction SilentlyContinue;"
+	$sCmdInfo &= "Remove-Item -Path ""C:\Users\maxfa\AppData\Local\Temp\adobegc.log"" -Force -ErrorAction SilentlyContinue;"
+
+	Local $iPID = Run($sCmdInfo, "", @SW_HIDE, BitOR($STDERR_CHILD, $STDOUT_CHILD))
+	Local $sOutput = ""
+	While 1
+		$sOutput &= StdoutRead($iPID)
+		If @error Then ExitLoop
+	WEnd
+	ProcessWaitClose($iPID)
+	LogWrite(1, "Removing AGS: Commands completed successfully." & @CRLF)
+	ToggleLog(1)
+
+EndFunc   ;==>DestroyAGS
+
+Func EditHosts()
+	Local $sHostsPath = "C:\Windows\System32\drivers\etc\hosts"
+	Local $sBackupPath = "C:\Windows\System32\drivers\etc\hosts.bak"
+
+	; Remove the read-only attribute
+	FileSetAttrib($sHostsPath, "-R")
+
+	; If the backup file doesn't exist, create it
+	If Not FileExists($sBackupPath) Then
+		FileCopy($sHostsPath, $sBackupPath)
+	EndIf
+
+	; Open the hosts file with Notepad
+	Run("notepad.exe " & $sHostsPath)
+
+	; Wait for the hosts file to be closed
+	While ProcessExists("notepad.exe")
+		Sleep(1000) ; Wait for 1 second
+	WEnd
+
+	; Reset the read-only attribute
+	FileSetAttrib($sHostsPath, "+R")
+EndFunc   ;==>EditHosts
+
+Func RestoreHosts()
+	_GUICtrlTab_SetCurFocus($hTab, 3)
+	MemoWrite(@CRLF & "Restoring the hosts file from backup..." & @CRLF & "---" & @CRLF & "Please wait..." & @CRLF)
+	Local $sHostsPath = "C:\Windows\System32\drivers\etc\hosts"
+	Local $sBackupPath = "C:\Windows\System32\drivers\etc\hosts.bak"
+
+	; If the backup file exists, restore it
+	If FileExists($sBackupPath) Then
+		; Remove the read-only attribute from the hosts file
+		FileSetAttrib($sHostsPath, "-R")
+
+		; Replace the hosts file with the backup file
+		FileCopy($sBackupPath, $sHostsPath, 1)
+
+		; Reset the read-only attribute
+		FileSetAttrib($sHostsPath, "+R")
+
+		; Delete the backup file
+		FileDelete($sBackupPath)
+		LogWrite(1, "Restoring the hosts file from backup: Commands completed successfully." & @CRLF)
+	Else
+		LogWrite(1, "Restoring the hosts file from backup: No backup file found." & @CRLF)
+	EndIf
+	ToggleLog(1)
+EndFunc   ;==>RestoreHosts
+
+Func CleanFirewall()
+	_GUICtrlTab_SetCurFocus($hTab, 3)
+	Local $sCmdInfo = "netsh advfirewall firewall delete rule name=""Adobe Unlicensed Pop-up"""
+	Local $iPID = Run($sCmdInfo, "", @SW_HIDE, BitOR($STDERR_CHILD, $STDOUT_CHILD))
+	Local $sOutput = ""
+	While 1
+		$sOutput &= StdoutRead($iPID)
+		If @error Then ExitLoop
+	WEnd
+	ProcessWaitClose($iPID)
+	LogWrite(1, "Removing Adobe Firewall Blocks:" & @CRLF & $sOutput & @CRLF)
+
+	ToggleLog(1)
+EndFunc   ;==>CleanFirewall
+
+Func OpenWF()
+	Run("mmc.exe C:\Windows\System32\wf.msc")
+	ConsoleWrite("Opening Windows Firewall...")
+EndFunc   ;==>OpenWF
+
+Func EnableDisableWFRules()
+	_GUICtrlTab_SetCurFocus($hTab, 3)
+	MemoWrite(@CRLF & "Checking state of Windows Firewall Rules..." & @CRLF & "---" & @CRLF & "Please wait...")
+	Local $sCmdInfo = "PowerShell Set-ExecutionPolicy Bypass -scope Process -Force;try{$name = (Get-NetFirewallRule -DisplayName 'Adobe Unlicensed Pop-up').Name} catch{$name='no'};If($name -ne 'no'){(Get-NetFirewallRule -Name $name).Enabled};"
+	Local $iPID = Run($sCmdInfo, "", @SW_HIDE, BitOR($STDERR_CHILD, $STDOUT_CHILD))
+	Local $sOutput = ""
+	While 1
+		$sOutput &= StdoutRead($iPID)
+		If @error Then ExitLoop
+	WEnd
+	ProcessWaitClose($iPID)
+
+	If StringInStr($sOutput, "True") > 0 Then
+		; If the rule is enabled, disable it
+		$sCmdInfo = 'netsh advfirewall firewall set rule name="Adobe Unlicensed Pop-up" new enable=no'
+		$iPID = Run($sCmdInfo, "", @SW_HIDE, BitOR($STDERR_CHILD, $STDOUT_CHILD))
+		LogWrite(1, "Disabling Windows Firewall Rule: Adobe Unlicensed Pop-up" & @CRLF)
+	Else
+		; If the rule is disabled, enable it
+		$sCmdInfo = 'netsh advfirewall firewall set rule name="Adobe Unlicensed Pop-up" new enable=yes'
+		$iPID = Run($sCmdInfo, "", @SW_HIDE, BitOR($STDERR_CHILD, $STDOUT_CHILD))
+		LogWrite(1, "Enabling Windows Firewall Rule: Adobe Unlicensed Pop-up" & @CRLF)
+	EndIf
+	Local $sOutput = ""
+	While 1
+		$sOutput &= StdoutRead($iPID)
+		If @error Then ExitLoop
+	WEnd
+	ProcessWaitClose($iPID)
+	LogWrite(0, "Windows Firewall Rule Status: " & $sOutput & @CRLF)
+	ToggleLog(1)
+EndFunc   ;==>EnableDisableWFRules
