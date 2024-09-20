@@ -2,8 +2,8 @@
 #RequireAdmin
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
 #AutoIt3Wrapper_Icon=Skull.ico
-#AutoIt3Wrapper_Outfile_x64=AdobeGenP.exe
 #AutoIt3Wrapper_UseX64=y
+#AutoIt3Wrapper_Outfile_x64=AdobeGenP.exe
 #AutoIt3Wrapper_Res_Comment=AdobeGenP
 #AutoIt3Wrapper_Res_Description=AdobeGenP
 #AutoIt3Wrapper_Res_ProductName=AdobeGenP
@@ -25,10 +25,11 @@
 #include <GuiListView.au3>
 #include <WinAPIProc.au3>
 #include <Misc.au3>
+#include <Crypt.au3>
 
 AutoItSetOption("GUICloseOnESC", 0)  ;1=ESC closes, 0=ESC won't close
 
-Global Const $g_AppWndTitle = "AdobeGenP", $g_AppVersion = "Original version by uncia - CGP Community Edition - v3.3.10"
+Global Const $g_AppWndTitle = "AdobeGenP", $g_AppVersion = "Original version by uncia - CGP Community Edition - v3.4.1"
 
 If _Singleton($g_AppWndTitle, 1) = 0 Then
 	Exit
@@ -41,7 +42,7 @@ Global $FilesToRestore[0][1], $fFilesListed = 0
 Global $MyhGUI, $hTab, $hMainTab, $hLogTab, $idMsg, $idListview, $g_idListview, $idButtonSearch, $idButtonStop
 Global $idButtonCustomFolder, $idBtnCure, $idBtnDeselectAll, $ListViewSelectFlag = 1
 Global $idBtnBlockPopUp, $idBtnRunasTI, $idMemo, $timestamp, $idLog, $idBtnRestore, $idBtnCopyLog, $idFindACC
-Global $idOnlyAdobeFolders, $idBtnSaveOptions, $idUseCustomDomains, $idCustomDomainsInput
+Global $idEnableMD5, $idOnlyAdobeFolders, $idBtnSaveOptions, $idUseCustomDomains, $idCustomDomainsInput
 Global $hPopupTab, $idBtnDestroyAGS, $idBtnEditHosts, $idLabelEditHosts, $sEditHostsText, $idBtnRestoreHosts
 Global $sDestroyAGSText, $idLabelDestroyAGS, $sCleanFirewallText, $idLabelCleanFirewall, $idBtnCleanFirewall, $idBtnOpenWF, $idBtnEnableDisableWF
 
@@ -67,6 +68,7 @@ Global $sz_type, $bFoundAcro32 = False, $aSpecialFiles, $sSpecialFiles = "|"
 Global $ProgressFileCountScale, $FileSearchedCount
 
 Global $bFindACC = IniRead($sINIPath, "Options", "FindACC", "1")
+Global $bEnableMD5 = IniRead($sINIPath, "Options", "EnableMD5", "1")
 Global $bOnlyAdobeFolders = IniRead($sINIPath, "Options", "OnlyAdobeFolder", "1")
 Global $bUseCustomDomains = IniRead($sINIPath, "Options", "UseCustomDomains", "0")
 Global $sCustomDomains = IniRead($sINIPath, "Options", "CustomDomains", "'8eptecerpq.adobestats.io','xa8g202i4u.adobestats.io'")
@@ -436,6 +438,13 @@ While 1
 				$bFindACC = 0
 			EndIf
 
+		Case $idMsg = $idEnableMD5
+			If _IsChecked($idEnableMD5) Then
+				$bEnableMD5 = 1
+			Else
+				$bEnableMD5 = 0
+			EndIf
+
 		Case $idMsg = $idOnlyAdobeFolders
 			If _IsChecked($idOnlyAdobeFolders) Then
 				$bOnlyAdobeFolders = 1
@@ -565,7 +574,15 @@ Func MainGui()
 	EndIf
 	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
 
-	$idOnlyAdobeFolders = GUICtrlCreateCheckbox("Only find files in Adobe or Acrobat folders", 10, 90, 300, 25, BitOR($BS_AUTOCHECKBOX, $BS_LEFT))
+	$idEnableMD5 = GUICtrlCreateCheckbox("Enable MD5 Checksum", 10, 90, 300, 25, BitOR($BS_AUTOCHECKBOX, $BS_LEFT))
+	If $bEnableMD5 = 1 Then
+		GUICtrlSetState($idEnableMD5, $GUI_CHECKED)
+	Else
+		GUICtrlSetState($idEnableMD5, $GUI_UNCHECKED)
+	EndIf
+	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
+
+	$idOnlyAdobeFolders = GUICtrlCreateCheckbox("Only find files in Adobe or Acrobat folders", 10, 130, 300, 25, BitOR($BS_AUTOCHECKBOX, $BS_LEFT))
 	If $bOnlyAdobeFolders = 1 Then
 		GUICtrlSetState($idOnlyAdobeFolders, $GUI_CHECKED)
 	Else
@@ -573,7 +590,7 @@ Func MainGui()
 	EndIf
 	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
 
-	$idUseCustomDomains = GUICtrlCreateCheckbox("Only use domains below for pop-up blocker", 10, 130, 300, 25, BitOR($BS_AUTOCHECKBOX, $BS_LEFT))
+	$idUseCustomDomains = GUICtrlCreateCheckbox("Only use domains below for pop-up blocker", 10, 170, 300, 25, BitOR($BS_AUTOCHECKBOX, $BS_LEFT))
 	If $bUseCustomDomains = 1 Then
 		GUICtrlSetState($idUseCustomDomains, $GUI_CHECKED)
 	Else
@@ -581,7 +598,7 @@ Func MainGui()
 	EndIf
 	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
 
-	$idCustomDomainsInput = GUICtrlCreateInput("Custom Domains", 10, 155, 288, 150, BitOR($ES_MULTILINE, $ES_LEFT, $ES_WANTRETURN))
+	$idCustomDomainsInput = GUICtrlCreateInput("Custom Domains", 10, 195, 288, 150, BitOR($ES_MULTILINE, $ES_LEFT, $ES_WANTRETURN))
 	GUICtrlSetResizing(-1, $GUI_DOCKVCENTER)
 	GUICtrlSetData($idCustomDomainsInput, StringReplace(StringReplace($sCustomDomains, ",", @CRLF), "'", ""))
 
@@ -1167,7 +1184,15 @@ Func MyGlobalPatternPatch($MyFileToPatch, $MyArrayToPatch)
 		Sleep(100)
 		;MemoWrite1(@CRLF & "---" & @CRLF & "Waitng for your command :)" & @CRLF & "---")
 
-		LogWrite(1, "File patched." & @CRLF)
+		LogWrite(1, "File patched.")
+		If $bEnableMD5 = 1 Then
+			_Crypt_Startup()
+			Local $sMD5Checksum = _Crypt_HashFile($MyFileToPatch, $CALG_MD5)
+			If Not @error Then
+				LogWrite(1, "MD5 Checksum: " & $sMD5Checksum & @CRLF)
+			EndIf
+			_Crypt_Shutdown()
+		EndIf
 
 	Else
 		;Empty array - > no search-replace patterns
@@ -1602,6 +1627,11 @@ Func SaveOptionsToConfig()
 		IniWrite($sINIPath, "Options", "FindACC", "1")
 	Else
 		IniWrite($sINIPath, "Options", "FindACC", "0")
+	EndIf
+	If _IsChecked($idEnableMD5) Then
+		IniWrite($sINIPath, "Options", "EnableMD5", "1")
+	Else
+		IniWrite($sINIPath, "Options", "EnableMD5", "0")
 	EndIf
 	If _IsChecked($idOnlyAdobeFolders) Then
 		IniWrite($sINIPath, "Options", "OnlyAdobeFolders", "1")
