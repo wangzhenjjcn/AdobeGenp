@@ -5,7 +5,7 @@ Thanks to MIkeVirtual / E1uSiv3 sharing If V3.4.14.1 not work,Please try V3.3.10
 
 
     Last V 3.4.1&3.4.14.1
-    [https://www.mediafire.com/file/pad3qpnmncwaqeb/Adobe-GenP-3.3.10-CGP.7z/file](https://www.mediafire.com/file/h12bn9z4tj3dgcf/Adobe-GenP-3.4.1-CGP.7z/file)
+    https://www.mediafire.com/file/pad3qpnmncwaqeb/Adobe-GenP-3.3.10-CGP.7z/file
     https://www.mediafire.com/file/4cu6f1cpy7ozx3a/Adobe_GenP_3.4.14.1.7z/file
 
 
@@ -23,7 +23,30 @@ Press ‘Custom path’ – select folder that you want [depending upon the app 
 Press ‘Search Files’ – wait until GenP finds all files.
 Press ‘Pill Button’ – wait until GenP do it’s job.
 
+
+
+
  
+GenP CGP Community Edition v3.4.1
+
+Release Notes:
+– Fixed “Unable to allocate memory” error when patching large binaries
+
+– Improved fixes for crashes during app startup
+– Added Premiere Pro 24.6.1/25 Beta blank home screen fix
+– Added MD5 checksum output for each patched file in log — potentially helpful when troubleshooting [enable/disable in Options tab or config.ini]
+
+ 
+
+homescreen fix is same as Photoshop patches… just had to add config.ini output to include file path for premiere as it’s slightly different vs photoshop.
+
+3.3.12 patches fixed crashes for signed OUT users but had issues with users signed IN with expired trial (no issues for signed users who did not start trial).. but 3.4.0 fixes all that.
+
+
+
+
+
+
 
 GenP 3.4.14.1 ReleaseFull changelog:
 
@@ -59,10 +82,3 @@ Fixed weird C:\Windows\System32\config\systemprofile error
 Fixed typo (grammatical errors) in ARM detection code.
 
 General stability/code fixes.
-
-3.3.10 Changelog:
-
-This will patch PS properly. It will patch Adobe Illustrator 2023 properly.
-I cannot get a pop-up in Ai 2024.
-3.3.10 has a new Pop-up Tools tab. Full of goodies for experts and testing.
-Anyone with pop-up in 2024 versions of Ai, please try nuking AGS from this page, remove all firewall and hosts rules, and see if you still get pop-up.
