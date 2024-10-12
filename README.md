@@ -4,8 +4,8 @@ AdobeGenp Adobe Adobe CC 2019/2020/2021/2022(test)/2023(test)/2024(test) GenP Un
 Thanks to MIkeVirtual / E1uSiv3 sharing If V3.4.14.1 not work,Please try V3.3.10
 
 
-    Last V 3.4.1&3.4.14.1
-    https://www.mediafire.com/file/pad3qpnmncwaqeb/Adobe-GenP-3.3.10-CGP.7z/file
+    Last V 3.4.2&3.4.14.1
+    https://www.mediafire.com/file/0tp8ku74tp45od7/Adobe-GenP-3.4.2.rar/file
     https://www.mediafire.com/file/4cu6f1cpy7ozx3a/Adobe_GenP_3.4.14.1.7z/file
 
 
@@ -24,7 +24,16 @@ Press ‘Search Files’ – wait until GenP finds all files.
 Press ‘Pill Button’ – wait until GenP do it’s job.
 
 
+GenP CGP Community Edition v3.4.2
 
+” Release Notes:
+– commented out “UnlicensedPS”, “UnlicensedIllustrator2023/b” patches to fix some apps crashing.
+
+These should have been removed long ago, as they didn’t solve the unlicensed/genuine popups some receive — more recently they are causing some newer app builds to crash at launch.
+
+Maybe if I ever get a pop-up they can be properly patched out without HOSTS/firewall blocks.
+
+As long as nothing else changes (famous last words…), this should be ready to go for the stable v2025 apps which will drop any time now.
 
  
 GenP CGP Community Edition v3.4.1
