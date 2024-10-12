@@ -1,7 +1,7 @@
 # AdobeGenp
-AdobeGenp Adobe Adobe CC 2019/2020/2021/2022(test)/2023(test)/2024(test) GenP Universal Patch 2024 - Software  from  cybermania 
+AdobeGenp Adobe Adobe CC 2019/2020/2021/2022(test)/2023(test)/2024(test)/2025(test) GenP Universal Patch 2025 - Software  from  cybermania 
 
-Thanks to MIkeVirtual / E1uSiv3 sharing If V3.4.14.1 not work,Please try V3.3.10
+Thanks to MIkeVirtual / E1uSiv3 sharing If V3.4.2 not work,Please try V3.4.14/3.4.1
 
 
     Last V 3.4.2&3.4.14.1
