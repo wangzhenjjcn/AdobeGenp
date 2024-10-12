@@ -29,7 +29,7 @@
 
 AutoItSetOption("GUICloseOnESC", 0)  ;1=ESC closes, 0=ESC won't close
 
-Global Const $g_AppWndTitle = "AdobeGenP", $g_AppVersion = "Original version by uncia - CGP Community Edition - v3.4.1"
+Global Const $g_AppWndTitle = "AdobeGenP", $g_AppVersion = "Original version by uncia - CGP Community Edition - v3.4.2"
 
 If _Singleton($g_AppWndTitle, 1) = 0 Then
 	Exit

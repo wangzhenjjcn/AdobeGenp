@@ -1,10 +1,10 @@
 # AdobeGenp
-AdobeGenp Adobe破解 Adobe CC 2019/2020/2021/2022(test)/2023(test)/2024(test) GenP Universal Patch 3.3 May 31, 2024 - Software  from https://www.cybermania.ws/apps/genp-universal-patch/
+AdobeGenp Adobe破解 Adobe CC 2019/2020/2021/2022(test)/2023(test)/2024(test)/2025(test) GenP Universal Patch   - Software  from https://www.cybermania.ws/apps/genp-universal-patch/
 
 
 
-    Last V 3.3.10
-    https://www.mediafire.com/file/pad3qpnmncwaqeb/Adobe-GenP-3.3.10-CGP.7z/file
+    Last V 3.4.2
+    https://www.mediafire.com/file/0tp8ku74tp45od7/Adobe-GenP-3.4.2.rar/file
 
 
 
@@ -24,6 +24,18 @@ Press ‘Pill Button’ – wait until GenP do it’s job.
  
 
 Changelog:
+
+
+GenP CGP Community Edition v3.4.2
+
+” Release Notes:
+– commented out “UnlicensedPS”, “UnlicensedIllustrator2023/b” patches to fix some apps crashing.
+
+These should have been removed long ago, as they didn’t solve the unlicensed/genuine popups some receive — more recently they are causing some newer app builds to crash at launch.
+
+Maybe if I ever get a pop-up they can be properly patched out without HOSTS/firewall blocks.
+
+As long as nothing else changes (famous last words…), this should be ready to go for the stable v2025 apps which will drop any time now.
 
 GENP 3.3.5 Changes
 
