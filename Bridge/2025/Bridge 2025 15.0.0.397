@@ -1,0 +1,55 @@
+Adobe Bridge gives you centralized access to all the files and assets you need for your creative projects. Organize personal and team assets, batch edit with ease, add watermarks, set centralized color preferences, and even upload your photos to Adobe Stock. Bridge simplifies your workflow and keeps you organized and now with CC Libraries.
+
+
+Features:
+– Bulk import, export and preview CC Libraries assets
+– Edit photo capture time
+– Export/ Import network cache
+– Native PDF Output Module
+– Easy upload of images to Adobe Stock so you can get royalties for your work
+– Support for Retina and HiDPI displays with the ability to scale
+– Automated cache management
+– Publishing to Adobe Portfolio to build your personalized website
+– Quick organization and stacking of panoramic and HDR images
+– On-demand thumbnail and metadata generation
+– Option to import photos and videos from your mobile device or digital camera on macOS
+– Support for CEP HTML5
+– Flexible batch processing
+– Drag-and-drop file flexibility
+– Centralized color settings
+
+Consistent user experience
+Adobe Bridge now has an enhanced user interface to provide you a similar experience like other Creative Cloud applications. You can also change the default user interface appearance, text size, and scaling by setting the User Interface preferences in the Edit > Preferences > Interface dialog.
+
+Enhanced Creative Cloud Libraries
+The Libraries workspace in Bridge now displays a high-quality preview of library items. You can select multiple items to see their previews together.
+
+Centralized cache management
+You can now share a cache with other Bridge users and let them use the shared cache instead of creating a cache. Any Adobe Bridge user can export a cache to a shared folder, and other users can import a copy of the shared cache to their local systems. Given that the systems are in synchronization, managing the cache at a centralized location lets you reuse the exported cache, without the need to rebuild the cache on different user machines. You can create and manage the shared cache by using the Manage Cache dialog (Tools > Manage Cache), which has now been enhanced to provide options for building, importing, and purging cache. In addition, the cache preferences have been enhanced (Edit > Preferences > Cache and Edit > Preferences > Cache Management).
+
+Edit capture time
+Adobe Bridge now lets you change the capture time of the JPEG and RAW image files, just like the way it is done in Adobe Lightroom. This feature is helpful if you travel to a different time zone and do not change the date or time setting of your camera before you start photographing. With this feature, you can edit the capture time after capturing the image.
+
+Support for XD file formats
+Bridge now supports preview, thumbnail generation, metadata tagging, and keyword generation for Adobe XD files.
+
+Media cache preferences
+Bridge now processes and maintains a cache of all audio and video playback files. This capability improves the performance of playback files because the files are available for ready access whenever you want to view them later. It is recommended that you regularly clean the old and unused media cache files to optimize the performance. The preferences for media cache can be set by choosing Edit > Preferences > Media Cache.
+
+Cut, copy, or move files and folders across Bridge and File Explorer or Finder
+Bridge now lets you perform the following operations:
+
+– Cut, copy, or move files and folders from File Explorer (Windows) or Finder (macOS) and paste them in Bridge
+– Cut, copy, or move files and folders from the Bridge workspace and paste them in File Explorer (Windows) or Finder (macOS)
+
+System Requirements:
+Recommeded:
+– Processor: Intel® 7thGen or newer CPU – or AMD equivalent
+– Operating system: Microsoft Windows 10 (64-bit) Version 20H2 or later; LTSC versions are not supported
+– RAM: 16 GB of RAM for HD media and Substance 3D workflows / 32 GB for 4K media or higher
+– GPU: 4 GB of GPU VRAM / DirectX 12.0-capable system
+– Hard disk space: Fast internal SSD for app installation and cache
+– Monitor resolution: 1920 x 1080 or greater
+
+Language versions available for Bridge:
+– Dansk, Deutsch, English, Español, Français, Hebrew*, Hungarian, Italiano, Nederlands, Norwegian, Polish, Português (Brasil), Suomi, Svenska, Turkish, Ukrainian, čeština, Русский, 日本語, 简体中文, 繁體中文, 한국어]
