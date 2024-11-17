@@ -1,0 +1,46 @@
+Ingest, transcode, create proxies, and output any format you can imagine. This powerful media management tool allows you to work with media in a unified way across applications. Tight integration with Adobe Premiere Pro CC, After Effects CC, and other applications provides a seamless workflow.
+
+
+Key Features:
+– Support for 8K H.264 export
+– Export XAVC QFHD Long GOP 4:2:2 formats
+– Hardware-accelerated HEVC encoding on Windows 10 with 7th Generation (or later) Intel® Core™ processors and Intel Graphics enabled
+– Improved RED camera format decoding
+– Improved Sony RAW/X-OCN camera format decoding
+– Hardware-accelerated H.264 encoding on Windows 10 with 6th Generation (or later) Intel® Core™ processors and Intel Graphics enabled
+– Hardware-accelerated H.264 and HEVC encoding on Mac OS 10.13 systems with supported hardware
+– Support for importing Canon C200 camera formats
+– Support for importing Sony Venice camera formats
+– RED camera Image Processing Pipeline [IPP2] support
+– Destination Publishing support for new Twitter 280-character limit
+– Channel selection when publishing to YouTube and Vimeo
+– Playlist selection when publishing to YouTube
+– Page selection when publishing to Facebook
+– Add custom titles when publishing to YouTube, Facebook, or Vimeo
+– Add custom video thumbnails when publishing to YouTube
+– Notification for missing items in queue before encoding
+– H.264 adaptive bitrate presets automatically choose best output bitrate based on source frame size and frame rate
+– Animated GIF export on macOS and Windows
+– Time Tuner effect improvements
+– Newly optimized list of H.264 presets
+– Format support for RF64 WAV Decode/Encode, decode for Sony X-OCN, and QuickTime DNx Smart Rendering
+– Warning when importing non-native QuickTime sources
+– Timecode modification for 720p 59.94 media
+– Destination Publishing to Adobe Stock Contributor
+– Adobe Team Projects support
+– Support for Color Profiles from After Effects sources
+– Automatically relinked assets when importing a sequence
+– Option to maintain playback in Premiere Pro while rendering in Media Encoder
+– Streamlined bit depth and alpha channel settings (QuickTime only)
+– Export support for ambisonic audio (H.264 only)
+– Support for Hybrid LOG Gamma (HLG)
+– Support for HDR in HEVC (H.265) export Export support for Panasonic AVC-Long GOP Op1b
+
+System Requirements:
+– Processor: Intel 6thGen or newer CPU
+– Operating system: Microsoft Windows 10 (64-bit), version 1703 or later (required)
+– RAM: 16 GB of RAM
+– Hard disk space: 4GB of available hard-disk space; additional free space required during installation (cannot install on removable flash storage devices)
+– Monitor resolution: 1920 x 1080 or greater display resolution
+– GPU: Adobe-recommended GPU card for GPU-accelerated performance (see Premiere Pro System Requirements)
+– Ethernet: 10 Gigabit ethernet for 4K shared network workflows (1Gb for HD-only)
