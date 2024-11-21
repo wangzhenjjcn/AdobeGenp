@@ -8,6 +8,19 @@ Thanks to MIkeVirtual / E1uSiv3 sharing If V3.4.2 not work,Please try V3.4.14/3.
     https://www.mediafire.com/file/0tp8ku74tp45od7/Adobe-GenP-3.4.2.rar/file
     https://www.mediafire.com/file/4cu6f1cpy7ozx3a/Adobe_GenP_3.4.14.1.7z/file
 
+Adobe’s Software Integrity Service periodically validates already installed Adobe Software. If it finds evidence of incorrect and invalid licenses, or tampering of program files, it automatically “phones” the company an alert for fraudulent use
+
+![image](https://github.com/user-attachments/assets/2e9c3910-b349-42f3-aeb5-38e638d3d80c)
+
+Click Pop-up
+
+![image](https://github.com/user-attachments/assets/492d0565-03ef-409a-a312-d32f493203e1)
+
+Wait till it block finish
+
+![image](https://github.com/user-attachments/assets/16993863-4e56-45bd-bdfd-ab33cc1c8047)
+
+Disable AGS as well……..
 
 
 Adobe universal patch. Can patch 2019/2020/2021 adobe product.
