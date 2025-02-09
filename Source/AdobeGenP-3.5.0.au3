@@ -2,63 +2,70 @@
 #RequireAdmin
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
 #AutoIt3Wrapper_Icon=Skull.ico
-#AutoIt3Wrapper_UseX64=y
 #AutoIt3Wrapper_Outfile_x64=AdobeGenP.exe
 #AutoIt3Wrapper_Res_Comment=AdobeGenP
-#AutoIt3Wrapper_Res_Description=AdobeGenP
+#AutoIt3Wrapper_Res_CompanyName=AdobeGenp
+#AutoIt3Wrapper_Res_Description=Adobe Generic Patcher
+#AutoIt3Wrapper_Res_Fileversion=3.5.0.0
+#AutoIt3Wrapper_Res_LegalCopyright=AdobeGenP 2025
+#AutoIt3Wrapper_Res_LegalTradeMarks=AdobeGenP 2025
 #AutoIt3Wrapper_Res_ProductName=AdobeGenP
-#AutoIt3Wrapper_Res_CompanyName=AdobeGenP
-#AutoIt3Wrapper_Res_LegalCopyright=AdobeGenP
-#AutoIt3Wrapper_Res_LegalTradeMarks=AdobeGenP
+#AutoIt3Wrapper_Res_ProductVersion=3.5.0
 #AutoIt3Wrapper_Run_Tidy=y
 #AutoIt3Wrapper_Run_Au3Stripper=y
+#AutoIt3Wrapper_UseX64=y
 #EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
 
-#include <String.au3>
-#include <ProgressConstants.au3>
-#include <WindowsConstants.au3>
-#include <GUIConstantsEx.au3>
-#include <GUITab.au3>
+#include <Array.au3>
 #include <ButtonConstants.au3>
-#include <MsgBoxConstants.au3>
-#include <EditConstants.au3>
-#include <GuiListView.au3>
-#include <WinAPIProc.au3>
-#include <Misc.au3>
 #include <Crypt.au3>
+#include <EditConstants.au3>
+#include <File.au3>
+#include <GUIConstantsEx.au3>
+#include <GuiListView.au3>
+#include <GUITab.au3>
+#include <Inet.au3>
+#include <Misc.au3>
+#include <MsgBoxConstants.au3>
+#include <Process.au3>
+#include <ProgressConstants.au3>
+#include <String.au3>
+#include <WindowsConstants.au3>
+#include <WinAPIProc.au3>
+#include <WinAPI.au3>
 
 AutoItSetOption("GUICloseOnESC", 0)  ;1=ESC closes, 0=ESC won't close
 
-Global Const $g_AppWndTitle = "AdobeGenP", $g_AppVersion = "Original version by uncia - CGP Community Edition - v3.4.2"
+Global $g_Version = "v3.5.0"
+Global $g_AppWndTitle = "AdobeGenP"
+Global $g_AppVersion = "Original version by uncia - CGP Community Edition - " & $g_Version
 
 If _Singleton($g_AppWndTitle, 1) = 0 Then
 	Exit
 EndIf
 
 Global $MyLVGroupIsExpanded = True
+Global $g_aGroupIDs[0]
 Global $fInterrupt = 0
 Global $FilesToPatch[0][1], $FilesToPatchNull[0][1]
 Global $FilesToRestore[0][1], $fFilesListed = 0
 Global $MyhGUI, $hTab, $hMainTab, $hLogTab, $idMsg, $idListview, $g_idListview, $idButtonSearch, $idButtonStop
 Global $idButtonCustomFolder, $idBtnCure, $idBtnDeselectAll, $ListViewSelectFlag = 1
-Global $idBtnBlockPopUp, $idBtnRunasTI, $idMemo, $timestamp, $idLog, $idBtnRestore, $idBtnCopyLog, $idFindACC
-Global $idEnableMD5, $idOnlyAdobeFolders, $idBtnSaveOptions, $idUseCustomDomains, $idCustomDomainsInput
-Global $hPopupTab, $idBtnDestroyAGS, $idBtnEditHosts, $idLabelEditHosts, $sEditHostsText, $idBtnRestoreHosts
-Global $sDestroyAGSText, $idLabelDestroyAGS, $sCleanFirewallText, $idLabelCleanFirewall, $idBtnCleanFirewall, $idBtnOpenWF, $idBtnEnableDisableWF
+Global $idBtnBlockPopUp, $idMemo, $timestamp, $idLog, $idBtnRestore, $idBtnCopyLog, $idFindACC
+Global $idEnableMD5, $idOnlyAdobeFolders, $idBtnSaveOptions, $idCustomDomainListLabel, $idCustomDomainListInput
+Global $hPopupTab, $idBtnRemoveAGS, $idBtnCleanHosts, $idBtnEditHosts, $idLabelEditHosts, $sEditHostsText, $idBtnRestoreHosts
+Global $sRemoveAGSText, $idLabelRemoveAGS, $sCleanFirewallText, $idLabelCleanFirewall, $idBtnOpenWF
+;Global $idBtnCleanFirewall, $idBtnEnableDisableWF
 
 Global $sINIPath = @ScriptDir & "\config.ini"
 If Not FileExists($sINIPath) Then
 	FileInstall("config.ini", @ScriptDir & "\config.ini")
 EndIf
 
-Global $MyDefPath = IniRead($sINIPath, "Default", "Path", "C:\Program Files")
+Global $MyDefPath = IniRead($sINIPath, "Default", "Path", @ProgramFilesDir)
 If Not FileExists($MyDefPath) Or Not StringInStr(FileGetAttrib($MyDefPath), "D") Then
-	IniWrite($sINIPath, "Default", "Path", "C:\Program Files")
-	$MyDefPath = "C:\Program Files"
-EndIf
-
-If (@UserName = "SYSTEM") Then
-	FileDelete(@WindowsDir & "\Temp\RunAsTI.exe")
+	IniWrite($sINIPath, "Default", "Path", @ProgramFilesDir)
+	$MyDefPath = @ProgramFilesDir
 EndIf
 
 Global $MyRegExpGlobalPatternSearchCount = 0, $Count = 0, $idProgressBar
@@ -70,12 +77,9 @@ Global $ProgressFileCountScale, $FileSearchedCount
 Global $bFindACC = IniRead($sINIPath, "Options", "FindACC", "1")
 Global $bEnableMD5 = IniRead($sINIPath, "Options", "EnableMD5", "1")
 Global $bOnlyAdobeFolders = IniRead($sINIPath, "Options", "OnlyAdobeFolder", "1")
-Global $bUseCustomDomains = IniRead($sINIPath, "Options", "UseCustomDomains", "0")
-Global $sCustomDomains = IniRead($sINIPath, "Options", "CustomDomains", "'8eptecerpq.adobestats.io','xa8g202i4u.adobestats.io'")
-If $sCustomDomains = "" Then
-	IniWrite($sINIPath, "Options", "CustomDomains", "'8eptecerpq.adobestats.io','xa8g202i4u.adobestats.io'")
-	$sCustomDomains = "'8eptecerpq.adobestats.io','xa8g202i4u.adobestats.io'"
-EndIf
+
+Global $sDefaultDomainListURL = "https://a.dove.isdumb.one/list.txt"
+Global $sCurrentDomainListURL = IniRead($sINIPath, "Options", "CustomDomainListURL", $sDefaultDomainListURL)
 
 Local $tTargetFileList_Adobe = IniReadSection($sINIPath, "TargetFiles")
 Global $TargetFileList_Adobe[0]
@@ -94,12 +98,18 @@ For $i = 1 To UBound($aSpecialFiles) - 1
 Next
 ;MsgBox(0, "", $sSpecialFiles)
 
+If $CmdLine[0] = 1 And $CmdLine[1] = "-popup" Then
+	; Directly call BlockPopUp then exit
+	BlockPopUp()
+	Exit
+EndIf
+
 GUIRegisterMsg($WM_COMMAND, "WM_COMMAND")
 
 MainGui()
 
 Local $bHostsbakExists = False
-If FileExists("C:\Windows\System32\drivers\etc\hosts.bak") Then
+If FileExists(@WindowsDir & "\System32\drivers\etc\hosts.bak") Then
 	GUICtrlSetState($idBtnRestoreHosts, $GUI_ENABLE)
 	$bHostsbakExists = True
 EndIf
@@ -107,7 +117,7 @@ EndIf
 While 1
 
 	Local $bHostsbakExistsNow
-	If FileExists("C:\Windows\System32\drivers\etc\hosts.bak") Then
+	If FileExists(@WindowsDir & "\System32\drivers\etc\hosts.bak") Then
 		$bHostsbakExistsNow = True
 	Else
 		$bHostsbakExistsNow = False
@@ -150,8 +160,7 @@ While 1
 			GUICtrlSetState($idButtonStop, $GUI_HIDE)
 			GUICtrlSetState($idButtonSearch, $GUI_SHOW)
 			GUICtrlSetState($idButtonSearch, 64)
-			GUICtrlSetState($idBtnRestore, $GUI_HIDE)
-			GUICtrlSetState($idBtnBlockPopUp, $GUI_SHOW)
+			GUICtrlSetState($idBtnRestore, 128)
 			GUICtrlSetState($idBtnBlockPopUp, 64)
 			GUICtrlSetState($idBtnDeselectAll, 128)
 			GUICtrlSetState($idBtnCure, 128)
@@ -189,7 +198,6 @@ While 1
 
 			_Expand_All_Click()
 			_GUICtrlListView_SetGroupInfo($idListview, 1, "Info", 1, $LVGS_COLLAPSIBLE)
-
 
 			; Clear previous results
 			$FilesToPatch = $FilesToPatchNull
@@ -233,9 +241,8 @@ While 1
 				GUICtrlSetState($idBtnCure, 256)     ; Set focus
 
 				If UBound($FilesToRestore) > 0 Then
-					GUICtrlSetState($idBtnBlockPopUp, $GUI_HIDE)
+					GUICtrlSetState($idBtnBlockPopUp, 128)
 					GUICtrlSetState($idBtnRestore, 64)
-					GUICtrlSetState($idBtnRestore, $GUI_SHOW)
 				EndIf
 			Else
 				$ListViewSelectFlag = 0   ; Set Flag to Deselected State
@@ -246,8 +253,8 @@ While 1
 				GUICtrlSetState($idButtonSearch, 256)     ; Set focus
 			EndIf
 
-			;_Collapse_All_Click()
-			_Expand_All_Click()
+			_Collapse_All_Click()
+			;expand_All_Click()
 
 			GUICtrlSetState($idBtnDeselectAll, 64)
 			GUICtrlSetState($idBtnBlockPopUp, 64)
@@ -290,13 +297,9 @@ While 1
 			EndIf
 
 
-		Case $idMsg = $idBtnBlockPopUp     ; Add firewall rule button
+		Case $idMsg = $idBtnBlockPopUp
 			ToggleLog(0)
 			BlockPopUp()
-
-		Case $idMsg = $idBtnRunasTI     ; Run as TrustedInstaller button
-			FileInstall("RunAsTI.exe", @WindowsDir & "\Temp\RunAsTI.exe")
-			Exit Run(@WindowsDir & '\Temp\RunAsTI.exe "' & @ScriptFullPath & '"')
 
 		Case $idMsg = $idBtnCure
 			ToggleLog(0)
@@ -351,15 +354,14 @@ While 1
 			GUICtrlSetState($idButtonSearch, 64)
 			GUICtrlSetState($idButtonCustomFolder, 64)
 			GUICtrlSetState($idBtnBlockPopUp, 64)
-			GUICtrlSetState($idBtnBlockPopUp, $GUI_SHOW)
-			GUICtrlSetState($idBtnRestore, $GUI_HIDE)
+			GUICtrlSetState($idBtnRestore, 128)
 			GUICtrlSetState($idBtnCure, 128)
 			GUICtrlSetState($idButtonSearch, 256)     ; Set focus
 			FillListViewWithInfo()
 
 			If $bFoundAcro32 = True Then
-				MsgBox($MB_SYSTEMMODAL, "Information", "GenP does not patch the x32 bit version of Acrobat. Please use the x64 bit version of Acrobat.")
-				LogWrite(1, "GenP does not patch the x32 bit version of Acrobat. Please use the x64 bit version of Acrobat.")
+				MsgBox($MB_SYSTEMMODAL, "Information", "AdobeGenP does not patch the x32 bit version of Acrobat. Please use the x64 bit version of Acrobat.")
+				LogWrite(1, "AdobeGenP does not patch the x32 bit version of Acrobat. Please use the x64 bit version of Acrobat.")
 			EndIf
 
 			ToggleLog(1)
@@ -367,7 +369,7 @@ While 1
 			GUICtrlSetState($hLogTab, $GUI_SHOW)
 
 		Case $idMsg = $idBtnRestore
-			GUICtrlSetData($idLog, "Activity Log" & @CRLF)
+			GUICtrlSetData($idLog, "Activity Log (" & $g_Version & ")" & @CRLF)
 			ToggleLog(0)
 			GUICtrlSetState($idListview, 128)
 			GUICtrlSetState($idBtnDeselectAll, 128)
@@ -418,9 +420,7 @@ While 1
 			GUICtrlSetState($idListview, 64)
 			GUICtrlSetState($idButtonCustomFolder, 64)
 			GUICtrlSetState($idBtnBlockPopUp, 64)
-			GUICtrlSetState($idBtnBlockPopUp, $GUI_SHOW)
-			GUICtrlSetState($idBtnRestore, $GUI_HIDE)
-			GUICtrlSetState($idBtnRestore, 64)
+			GUICtrlSetState($idBtnRestore, 128)
 			GUICtrlSetState($idBtnCure, 128)
 			GUICtrlSetState($idButtonSearch, 64)
 			GUICtrlSetState($idButtonSearch, 256)     ; Set focus
@@ -452,22 +452,14 @@ While 1
 				$bOnlyAdobeFolders = 0
 			EndIf
 
-		Case $idMsg = $idUseCustomDomains
-			GUICtrlSetState($idBtnBlockPopUp, 64)
-			If _IsChecked($idUseCustomDomains) Then
-				$bUseCustomDomains = 1
-				If Not StringInStr(GUICtrlRead($idCustomDomainsInput), ".adobestats.io") Then
-					GUICtrlSetData($idCustomDomainsInput, "8eptecerpq.adobestats.io" & @CRLF & "xa8g202i4u.adobestats.io")
-				EndIf
-			Else
-				$bUseCustomDomains = 0
-			EndIf
-
 		Case $idMsg = $idBtnSaveOptions
 			SaveOptionsToConfig()
 
-		Case $idMsg = $idBtnDestroyAGS
-			DestroyAGS()
+		Case $idMsg = $idBtnRemoveAGS
+			RemoveAGS()
+
+		Case $idMsg = $idBtnCleanHosts
+			RemoveHostsEntries()
 
 		Case $idMsg = $idBtnEditHosts
 			EditHosts()
@@ -475,33 +467,34 @@ While 1
 		Case $idMsg = $idBtnRestoreHosts
 			RestoreHosts()
 
-		Case $idMsg = $idBtnCleanFirewall
-			CleanFirewall()
-
 		Case $idMsg = $idBtnOpenWF
 			OpenWF()
 
-		Case $idMsg = $idBtnEnableDisableWF
-			EnableDisableWFRules()
+			;Case $idMsg = $idBtnCleanFirewall
+			;	CleanFirewall()
+
+			;Case $idMsg = $idBtnEnableDisableWF
+			;	EnableDisableWFRules()
 
 	EndSelect
 WEnd
 
-
 Func MainGui()
-	$MyhGUI = GUICreate($g_AppWndTitle, 595, 710, -1, -1, BitOR($WS_MAXIMIZEBOX, $WS_MINIMIZEBOX, $WS_SIZEBOX, $GUI_SS_DEFAULT_GUI))
-	$hTab = GUICtrlCreateTab(0, 1, 597, 710)
+	$MyhGUI = GUICreate($g_AppWndTitle, 595, 510, -1, -1, BitOR($WS_MAXIMIZEBOX, $WS_MINIMIZEBOX, $WS_SIZEBOX, $GUI_SS_DEFAULT_GUI))
+	$hTab = GUICtrlCreateTab(0, 1, 597, 510)
 
 	$hMainTab = GUICtrlCreateTabItem("Main")
-	$idListview = GUICtrlCreateListView("", 10, 35, 575, 555)
+	$idListview = GUICtrlCreateListView("", 10, 35, 575, 355)
 	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
-	$g_idListview = GUICtrlGetHandle($idListview) ; get the handle for use in the notify events
+	$g_idListview = GUICtrlGetHandle($idListview) ; get handle for use in the notify events
 	_GUICtrlListView_SetExtendedListViewStyle($idListview, BitOR($LVS_EX_FULLROWSELECT, $LVS_EX_GRIDLINES, $LVS_EX_DOUBLEBUFFER, $LVS_EX_CHECKBOXES))
+	$iStyles = _WinAPI_GetWindowLong($MyhGUI, $GWL_STYLE)
+	_WinAPI_SetWindowLong($MyhGUI, $GWL_STYLE, BitXOR($iStyles, $WS_SIZEBOX, $WS_MINIMIZEBOX, $WS_MAXIMIZEBOX))
 
 	; Add columns
 	_GUICtrlListView_SetItemCount($idListview, UBound($FilesToPatch))
 	_GUICtrlListView_AddColumn($idListview, "", 20)
-	_GUICtrlListView_AddColumn($idListview, "For collapsing or expanding all groups, please click here", 532, 2)
+	_GUICtrlListView_AddColumn($idListview, "[Click to expand/collapse all]", 532, 2)
 
 	; Build groups
 	_GUICtrlListView_EnableGroupView($idListview)
@@ -510,57 +503,49 @@ Func MainGui()
 
 	FillListViewWithInfo()
 
-	$idButtonCustomFolder = GUICtrlCreateButton("Path", 10, 630, 80, 30)
-	GUICtrlSetTip(-1, "Select Path that You want -> press Search -> press Patch button")
+	$idButtonCustomFolder = GUICtrlCreateButton("Path", 10, 430, 80, 30)
+	GUICtrlSetTip(-1, "Set custom search path")
 	GUICtrlSetImage(-1, "imageres.dll", -4, 0)
 	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
 
-	$idButtonSearch = GUICtrlCreateButton("Search", 110, 630, 80, 30)
-	GUICtrlSetTip(-1, "Let GenP find Apps automatically in current path")
+	$idButtonSearch = GUICtrlCreateButton("Search", 110, 430, 80, 30)
+	GUICtrlSetTip(-1, "Search path for installed apps")
 	GUICtrlSetImage(-1, "imageres.dll", -8, 0)
 	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
 
-	$idButtonStop = GUICtrlCreateButton("Stop", 110, 630, 80, 30)
+	$idButtonStop = GUICtrlCreateButton("Stop", 110, 430, 80, 30)
 	GUICtrlSetState(-1, $GUI_HIDE)
-	GUICtrlSetTip(-1, "Stop searching for Apps")
+	GUICtrlSetTip(-1, "Stop search")
 	GUICtrlSetImage(-1, "imageres.dll", -8, 0)
 	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
 
-	$idBtnDeselectAll = GUICtrlCreateButton("De/Select", 210, 630, 80, 30)
+	$idBtnDeselectAll = GUICtrlCreateButton("De/Select", 210, 430, 80, 30)
 	GUICtrlSetState(-1, $GUI_DISABLE)
-	GUICtrlSetTip(-1, "De/Select All files")
+	GUICtrlSetTip(-1, "De/Select all files")
 	GUICtrlSetImage(-1, "imageres.dll", -76, 0)
 	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
 
-	$idBtnCure = GUICtrlCreateButton("Patch", 305, 630, 80, 30)
+	$idBtnCure = GUICtrlCreateButton("Patch", 305, 430, 80, 30)
 	GUICtrlSetState(-1, $GUI_DISABLE)
-	GUICtrlSetTip(-1, "Patch all selected files")
+	GUICtrlSetTip(-1, "Patch selected file(s)")
 	GUICtrlSetImage(-1, "imageres.dll", -102, 0)
 	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
 
-	$idBtnBlockPopUp = GUICtrlCreateButton("Pop-up", 405, 630, 80, 30)
-	GUICtrlSetTip(-1, "Block Unlicensed Pop-up by creating Windows Firewall Rule")
-	GUICtrlSetImage(-1, "imageres.dll", -101, 0)
-	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
-
-	$idBtnRestore = GUICtrlCreateButton("Restore", 405, 630, 80, 30)
-	GUICtrlSetState(-1, $GUI_HIDE)
-	GUICtrlSetTip(-1, "Restore Original Files")
+	$idBtnRestore = GUICtrlCreateButton("Restore", 405, 430, 80, 30)
+	GUICtrlSetState(-1, $GUI_DISABLE)
+	GUICtrlSetTip(-1, "Restore original file(s)")
 	GUICtrlSetImage(-1, "imageres.dll", -113, 0)
 	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
 
-	$idBtnRunasTI = GUICtrlCreateButton("Runas TI", 505, 630, 80, 30)
-	GUICtrlSetImage(-1, "imageres.dll", -74, 0)
-	If (@UserName = "SYSTEM") Then
-		GUICtrlSetState(-1, $GUI_DISABLE)
-	EndIf
-	GUICtrlSetTip(-1, "Run as Trusted Installer")
+	$idBtnBlockPopUp = GUICtrlCreateButton("Pop-up", 505, 430, 80, 30)
+	GUICtrlSetTip(-1, "Block Unlicensed pop-up")
+	GUICtrlSetImage(-1, "imageres.dll", -101, 0)
 	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
 
-	$idProgressBar = GUICtrlCreateProgress(10, 597, 575, 25, $PBS_SMOOTHREVERSE)
+	$idProgressBar = GUICtrlCreateProgress(10, 397, 575, 25, $PBS_SMOOTHREVERSE)
 	GUICtrlSetResizing(-1, $GUI_DOCKVCENTER)
 
-	GUICtrlCreateLabel($g_AppVersion, 10, 677, 575, 25, $ES_CENTER)
+	GUICtrlCreateLabel($g_AppVersion, 10, 477, 575, 25, $ES_CENTER)
 	GUICtrlSetResizing(-1, $GUI_DOCKBOTTOM)
 	GUICtrlCreateTabItem("")
 
@@ -582,7 +567,7 @@ Func MainGui()
 	EndIf
 	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
 
-	$idOnlyAdobeFolders = GUICtrlCreateCheckbox("Only find files in Adobe or Acrobat folders", 10, 130, 300, 25, BitOR($BS_AUTOCHECKBOX, $BS_LEFT))
+	$idOnlyAdobeFolders = GUICtrlCreateCheckbox("Search for files only in Adobe/Acrobat folders", 10, 130, 300, 25, BitOR($BS_AUTOCHECKBOX, $BS_LEFT))
 	If $bOnlyAdobeFolders = 1 Then
 		GUICtrlSetState($idOnlyAdobeFolders, $GUI_CHECKED)
 	Else
@@ -590,102 +575,89 @@ Func MainGui()
 	EndIf
 	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
 
-	$idUseCustomDomains = GUICtrlCreateCheckbox("Only use domains below for pop-up blocker", 10, 170, 300, 25, BitOR($BS_AUTOCHECKBOX, $BS_LEFT))
-	If $bUseCustomDomains = 1 Then
-		GUICtrlSetState($idUseCustomDomains, $GUI_CHECKED)
-	Else
-		GUICtrlSetState($idUseCustomDomains, $GUI_UNCHECKED)
-	EndIf
-	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
+	$idCustomDomainListLabel = GUICtrlCreateLabel("Hosts List URL:", 10, 180, 100, 20)
+	$idCustomDomainListInput = GUICtrlCreateInput($sCurrentDomainListURL, 90, 175, 490, 20, BitOR($ES_LEFT, $ES_WANTRETURN, $ES_AUTOHSCROLL))
+	GUICtrlSetLimit($idCustomDomainListInput, 255)
 
-	$idCustomDomainsInput = GUICtrlCreateInput("Custom Domains", 10, 195, 288, 150, BitOR($ES_MULTILINE, $ES_LEFT, $ES_WANTRETURN))
-	GUICtrlSetResizing(-1, $GUI_DOCKVCENTER)
-	GUICtrlSetData($idCustomDomainsInput, StringReplace(StringReplace($sCustomDomains, ",", @CRLF), "'", ""))
-
-	$idBtnSaveOptions = GUICtrlCreateButton("Save Options", 247, 630, 100, 30)
-	GUICtrlSetTip(-1, "Save Options to config.ini")
+	$idBtnSaveOptions = GUICtrlCreateButton("Save Options", 247, 430, 100, 30)
+	GUICtrlSetTip(-1, "Save options to config.ini")
 	GUICtrlSetImage(-1, "imageres.dll", 5358, 0)
 	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
 	GUICtrlCreateTabItem("")
 
 	$hPopupTab = GUICtrlCreateTabItem("Pop-up Tools")
 
-	$sDestroyAGSText = "ADOBE GENUINE SERVICES REMOVAL" & @CRLF & @CRLF & _
-			"Many times, the unlicensed pop-up you are getting is due to AGS." & @CRLF & _
-			"You really don't want it on your system spying on you. So, just nuke it!" & @CRLF & _
-			"This runs a quick script to stop and remove the services and files associated with AGS." & @CRLF & _
-			"Before you go blocking pop-ups, make sure you need to. Nuke AGS. See if pop-up is gone ;)"
+	$sRemoveAGSText = "ADOBE GENUINE SERVICE REMOVAL"
 
-	$idLabelDestroyAGS = GUICtrlCreateLabel($sDestroyAGSText, 10, 50, 575, 90, $ES_CENTER)
+	$idLabelRemoveAGS = GUICtrlCreateLabel($sRemoveAGSText, 5, 40, 575, 20, $ES_CENTER)
+	GUICtrlSetFont($idLabelRemoveAGS, 10, 700)
 	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
 
-	$idBtnDestroyAGS = GUICtrlCreateButton("Destroy AGS", 235, 150, 140, 30)
-	GUICtrlSetTip(-1, "Totally remove AGS from your system.")
+	$idBtnRemoveAGS = GUICtrlCreateButton("Remove AGS", 225, 65, 140, 30)
+	GUICtrlSetTip(-1, "Delete AGS from computer")
 	;GUICtrlSetImage(-1, "imageres.dll", 167, 0)
 	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
 
-	$sEditHostsText = "EDIT HOSTS" & @CRLF & @CRLF & _
-			"Before running the pop-up blocker, you need a clean hosts file. (No adobe rules!)" & @CRLF & _
-			"Be very careful editing hosts file. You'll find it at C:\Windows\System32\drivers\etc\hosts." & @CRLF & _
-			"Disable rules by putting a # in front of the rule (# comments the rule out). If things work as expected, remove the rule." & @CRLF & _
-			"Be sure to save the hosts file when done editing. We make a backup just in case you mess up ;)"
+	$sEditHostsText = "MANAGE HOSTS"
 
-	$idLabelEditHosts = GUICtrlCreateLabel($sEditHostsText, 10, 200, 575, 90, $ES_CENTER)
+	$idLabelEditHosts = GUICtrlCreateLabel($sEditHostsText, 5, 115, 575, 20, $ES_CENTER)
+	GUICtrlSetFont($idLabelEditHosts, 10, 700)
 	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
 
-	$idBtnEditHosts = GUICtrlCreateButton("Edit Hosts", 155, 300, 140, 30)
-	GUICtrlSetTip(-1, "Open hosts file for editing in notepad.")
+	$idBtnCleanHosts = GUICtrlCreateButton("Clean hosts", 70, 140, 140, 30)
+	GUICtrlSetTip(-1, "Remove hosts added by GenP")
 	;GUICtrlSetImage(-1, "imageres.dll", 15, 0)
 	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
 
-	$idBtnRestoreHosts = GUICtrlCreateButton("Restore Hosts", 315, 300, 140, 30)
+	$idBtnEditHosts = GUICtrlCreateButton("Edit hosts", 225, 140, 140, 30)
+	GUICtrlSetTip(-1, "Edit hosts in notepad")
+	;GUICtrlSetImage(-1, "imageres.dll", 15, 0)
+	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
+
+	$idBtnRestoreHosts = GUICtrlCreateButton("Restore hosts", 380, 140, 140, 30)
 	GUICtrlSetState($idBtnRestoreHosts, $GUI_DISABLE)
-	GUICtrlSetTip(-1, "Restore hosts backup. Available after editing hosts file.")
+	GUICtrlSetTip(-1, "Restore hosts from hosts.bak")
 	;GUICtrlSetImage(-1, "imageres.dll", 15, 0)
 	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
 
-	$sCleanFirewallText = "CLEAN WINDOWS FIREWALL" & @CRLF & @CRLF & _
-			"If you have used GenP in the past, or experience problems with internet access" & @CRLF & _
-			"this will remove any OUTBOUND BLOCK rules that GenP created." & @CRLF & _
-			"This enables you know you have a clean start, and allows ACC correct access for updates." & @CRLF & _
-			"You can always run pop-up blocker to add rules back if necessary ;)"
+	$sCleanFirewallText = "MANAGE WINDOWS FIREWALL"
 
-	$idLabelCleanFirewall = GUICtrlCreateLabel($sCleanFirewallText, 10, 350, 575, 90, $ES_CENTER)
+	$idLabelCleanFirewall = GUICtrlCreateLabel($sCleanFirewallText, 5, 190, 575, 20, $ES_CENTER)
+	GUICtrlSetFont($idLabelCleanFirewall, 10, 700)
 	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
 
-
-	$idBtnCleanFirewall = GUICtrlCreateButton("Clean Firewall", 235, 450, 140, 30)
-	GUICtrlSetTip(-1, "Remove all Windows Firewall Rules created by GenP.")
+	$idBtnOpenWF = GUICtrlCreateButton("Open Windows Firewall", 225, 215, 140, 30)
+	GUICtrlSetTip(-1, "Open Windows Firewall with Advanced Security console")
 	;GUICtrlSetImage(-1, "imageres.dll", 15, 0)
 	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
 
-	$idBtnOpenWF = GUICtrlCreateButton("Open Windows Firewall", 155, 500, 140, 30)
-	GUICtrlSetTip(-1, "Open Windows Firewall to check settings.")
+	;$idBtnCleanFirewall = GUICtrlCreateButton("Remove Firewall Rule", 235, 215, 140, 30)
+	;GUICtrlSetTip(-1, "Delete Windows Firewall pop-up rule")
 	;GUICtrlSetImage(-1, "imageres.dll", 15, 0)
-	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
+	;GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
 
-	$idBtnEnableDisableWF = GUICtrlCreateButton("Enable/Disable Rules", 315, 500, 140, 30)
-	GUICtrlSetTip(-1, "Toggle state of Windows Firewall OUTBOUND BLOCK rules with ADOBE in their name.")
+	;$idBtnEnableDisableWF = GUICtrlCreateButton("Enable/Disable Rule", 315, 443, 140, 30)
+	;GUICtrlSetTip(-1, "Toggle Windows Firewall Unlicensed pop-up rule")
 	;GUICtrlSetImage(-1, "imageres.dll", 15, 0)
-	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
+	;GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
 
 	GUICtrlCreateTabItem("")
 
 	$hLogTab = GUICtrlCreateTabItem("Log")
-	$idMemo = GUICtrlCreateEdit("", 10, 35, 575, 555, BitOR($ES_READONLY, $ES_CENTER, $WS_DISABLED))
+	$idMemo = GUICtrlCreateEdit("", 10, 35, 575, 355, BitOR($ES_READONLY, $ES_CENTER, $WS_DISABLED))
 	GUICtrlSetResizing(-1, $GUI_DOCKVCENTER)
 
-	$idLog = GUICtrlCreateEdit("", 10, 35, 575, 555, BitOR($WS_VSCROLL, $ES_AUTOVSCROLL, $ES_READONLY))
+	$idLog = GUICtrlCreateEdit("", 10, 35, 575, 355, BitOR($WS_VSCROLL, $ES_AUTOVSCROLL, $ES_READONLY))
 	GUICtrlSetResizing(-1, $GUI_DOCKVCENTER)
 	GUICtrlSetState($idLog, $GUI_HIDE)
-	GUICtrlSetData($idLog, "Activity Log" & @CRLF)
+	GUICtrlSetData($idLog, "Activity Log (" & $g_Version & ")" & @CRLF)
 
-	$idBtnCopyLog = GUICtrlCreateButton("Copy", 257, 630, 80, 30)
-	GUICtrlSetTip(-1, "Copy log to the clipboard")
+	$idBtnCopyLog = GUICtrlCreateButton("Copy", 257, 430, 80, 30)
+	GUICtrlSetTip(-1, "Copy log to clipboard")
 	GUICtrlSetImage(-1, "imageres.dll", -77, 0)
 	GUICtrlSetResizing(-1, $GUI_DOCKAUTO)
 
-	GUICtrlCreateLabel($g_AppVersion, 10, 677, 575, 25, $ES_CENTER)
+	GUICtrlCreateLabel($g_AppVersion, 10, 477, 575, 25, $ES_CENTER)
 	GUICtrlSetResizing(-1, $GUI_DOCKBOTTOM)
 	GUICtrlCreateTabItem("")
 
@@ -702,7 +674,7 @@ Func RecursiveFileSearch($INSTARTDIR, $DEPTH, $FileCount)
 	_GUICtrlListView_SetItemText($idListview, 1, "Searching for files.", 1)
 	;_GUICtrlListView_SetItemGroupID($idListview, 0, 1)
 
-	Local $RecursiveFileSearch_MaxDeep = 6
+	Local $RecursiveFileSearch_MaxDeep = 8
 	; Local $RecursiveFileSearch_WhenFoundRaiseToLevel = 0 ;0 to disable raising
 	If $DEPTH > $RecursiveFileSearch_MaxDeep Then Return
 
@@ -793,35 +765,16 @@ Func FillListViewWithInfo()
 	_GUICtrlListView_SetGroupInfo($idListview, 1, "Info", 1, $LVGS_COLLAPSIBLE)
 
 	; Add items
-	For $i = 0 To 24
+	For $i = 0 To 4
 		_GUICtrlListView_AddItem($idListview, "", $i)
 		_GUICtrlListView_SetItemGroupID($idListview, $i, 1)
 	Next
 
 	_GUICtrlListView_AddSubItem($idListview, 0, "", 1)
-	_GUICtrlListView_AddSubItem($idListview, 1, "To patch all Adobe apps in default location:", 1)
-	_GUICtrlListView_AddSubItem($idListview, 2, "Press 'Search Files' - Press 'Patch Files'", 1)
-	_GUICtrlListView_AddSubItem($idListview, 3, "Default path - C:\Program Files", 1)
-	_GUICtrlListView_AddSubItem($idListview, 4, '-------------------------------------------------------------', 1)
-	_GUICtrlListView_AddSubItem($idListview, 5, "After searching, some products may already be patched.", 1)
-	_GUICtrlListView_AddSubItem($idListview, 6, "To select\deselect products to patch, LEFT CLICK on the product group", 1)
-	_GUICtrlListView_AddSubItem($idListview, 7, "To select\deselect individual files, RIGHT CLICK on the file", 1)
-	_GUICtrlListView_AddSubItem($idListview, 8, '-------------------------------------------------------------', 1)
-	_GUICtrlListView_AddSubItem($idListview, 9, "What's new in GenP:", 1)
-	_GUICtrlListView_AddSubItem($idListview, 10, "Can patch apps from 2019 version to current and future releases", 1)
-	_GUICtrlListView_AddSubItem($idListview, 11, "Automatic search and patch in selected folder", 1)
-	_GUICtrlListView_AddSubItem($idListview, 12, "New patching logic. 'Unlicensed Pop-up' Blocker for Windows Firewall", 1)
-	_GUICtrlListView_AddSubItem($idListview, 13, "Support for all Substance products", 1)
-	_GUICtrlListView_AddSubItem($idListview, 14, '-------------------------------------------------------------', 1)
-	_GUICtrlListView_AddSubItem($idListview, 15, "Known issues:", 1)
-	_GUICtrlListView_AddSubItem($idListview, 16, "InDesign and InCopy will have high Cpu usage", 1)
-	_GUICtrlListView_AddSubItem($idListview, 17, "Animate will have some problems with home screen if Signed Out", 1)
-	_GUICtrlListView_AddSubItem($idListview, 18, "Acrobat, XD, Lightroom Classic will partially work if Signed Out", 1)
-	_GUICtrlListView_AddSubItem($idListview, 19, "Premiere Rush, Lightroom Online, Photoshop Express", 1)
-	_GUICtrlListView_AddSubItem($idListview, 20, "Won't be fully unlocked", 1)
-	_GUICtrlListView_AddSubItem($idListview, 21, '-------------------------------------------------------------', 1)
-	_GUICtrlListView_AddSubItem($idListview, 22, "Some Apps demand Creative Cloud App and mandatory SignIn", 1)
-	_GUICtrlListView_AddSubItem($idListview, 23, "Fresco, Aero, Lightroom Online, Premiere Rush, Photoshop Express", 1)
+	_GUICtrlListView_AddSubItem($idListview, 1, "Adobe Generic Patcher", 1)
+	_GUICtrlListView_AddSubItem($idListview, 2, '---------------', 1)
+	_GUICtrlListView_AddSubItem($idListview, 3, "Press 'Search' to find installed products; 'Patch' to patch selected products/files", 1)
+	_GUICtrlListView_AddSubItem($idListview, 4, "Default search path: [Program Files] -- press 'Path' to change", 1)
 
 	$fFilesListed = 0
 
@@ -832,7 +785,6 @@ Func FillListViewWithFiles()
 	_GUICtrlListView_DeleteAllItems($g_idListview)
 	_GUICtrlListView_SetExtendedListViewStyle($idListview, BitOR($LVS_EX_FULLROWSELECT, $LVS_EX_GRIDLINES, $LVS_EX_DOUBLEBUFFER, $LVS_EX_CHECKBOXES))
 
-	; Two column load
 	If UBound($FilesToPatch) > 0 Then
 		Global $aItems[UBound($FilesToPatch)][2]
 		For $i = 0 To UBound($aItems) - 1
@@ -905,14 +857,12 @@ Func MyFileOpenDialog()
 	Local Const $sMessage = "Select a Path"
 
 	; Display an open dialog to select a file.
-	FileSetAttrib("C:\Program Files\WindowsApps", "-H")
 	Local $MyTempPath = FileSelectFolder($sMessage, $MyDefPath, 0, $MyDefPath, $MyhGUI)
 
 
 	If @error Then
 		; Display the error message.
 		;MsgBox($MB_SYSTEMMODAL, "", "No folder was selected.")
-		FileSetAttrib("C:\Program Files\WindowsApps", "+H")
 		MemoWrite(@CRLF & "Path" & @CRLF & "---" & @CRLF & $MyDefPath & @CRLF & "---" & @CRLF & "waiting for user action")
 
 	Else
@@ -932,9 +882,9 @@ Func MyFileOpenDialog()
 		_GUICtrlListView_AddSubItem($idListview, 1, "Path:", 1)
 		_GUICtrlListView_AddSubItem($idListview, 2, " " & $MyDefPath, 1)
 		_GUICtrlListView_AddSubItem($idListview, 3, "Step 1:", 1)
-		_GUICtrlListView_AddSubItem($idListview, 4, " Press 'Search Files' - wait until GenP finds all files", 1)
+		_GUICtrlListView_AddSubItem($idListview, 4, " Press 'Search' - wait until search completes", 1)
 		_GUICtrlListView_AddSubItem($idListview, 5, "Step 2:", 1)
-		_GUICtrlListView_AddSubItem($idListview, 6, " Press 'Patch Files' - wait until GenP will do it's job", 1)
+		_GUICtrlListView_AddSubItem($idListview, 6, " Press 'Patch' - wait until patching completes", 1)
 		_GUICtrlListView_SetItemGroupID($idListview, 0, 1)
 		_GUICtrlListView_SetItemGroupID($idListview, 1, 1)
 		_GUICtrlListView_SetItemGroupID($idListview, 2, 1)
@@ -944,12 +894,11 @@ Func MyFileOpenDialog()
 		_GUICtrlListView_SetItemGroupID($idListview, 6, 1)
 		_GUICtrlListView_SetGroupInfo($idListview, 1, "Info", 1, $LVGS_COLLAPSIBLE)
 
-		FileSetAttrib("C:\Program Files\WindowsApps", "+H")
 		MemoWrite(@CRLF & "Path" & @CRLF & "---" & @CRLF & $MyDefPath & @CRLF & "---" & @CRLF & "Press the Search button")
 		; Display the selected folder.
 		;MsgBox($MB_SYSTEMMODAL, "", "You chose the following folder:" & @CRLF & $MyDefPath)
-		GUICtrlSetState($idBtnBlockPopUp, $GUI_SHOW)
-		GUICtrlSetState($idBtnRestore, $GUI_HIDE)
+		GUICtrlSetState($idBtnBlockPopUp, 64)
+		GUICtrlSetState($idBtnRestore, 128)
 		$fFilesListed = 0
 
 	EndIf
@@ -989,6 +938,12 @@ Func MyGlobalPatternSearch($MyFileToParse)
 	EndIf
 
 	If $sFileName = "AppsPanelBL.dll" Then
+		_ProcessCloseEx("""Creative Cloud.exe""")
+		_ProcessCloseEx("""Adobe Desktop Service.exe""")
+		Sleep(100)
+	EndIf
+
+	If $sFileName = "HDPIM.dll" Then
 		_ProcessCloseEx("""Creative Cloud.exe""")
 		_ProcessCloseEx("""Adobe Desktop Service.exe""")
 		Sleep(100)
@@ -1229,83 +1184,123 @@ Func RestoreFile($MyFileToDelete)
 EndFunc   ;==>RestoreFile
 
 ;---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Func RemoveHostsEntries()
+	_GUICtrlTab_SetCurFocus($hTab, 3)
+	Local $sHostsPath = @WindowsDir & "\System32\drivers\etc\hosts"
+	Local $sTempHosts = @TempDir & "\temp_hosts_remove.tmp"
+	Local $sMarkerStart = "# START - Adobe Blocklist"
+	Local $sMarkerEnd = "# END - Adobe Blocklist"
+
+	FileSetAttrib($sHostsPath, "-R")
+
+	Local $sHostsContent = FileRead($sHostsPath)
+	If @error Then
+		MemoWrite("Error reading hosts file." & @CRLF)
+		Return False
+	EndIf
+
+	If Not StringInStr($sHostsContent, $sMarkerStart) Or Not StringInStr($sHostsContent, $sMarkerEnd) Then
+		LogWrite(1, "No Adobe entries to remove." & @CRLF)
+		ToggleLog(1)
+		Return True
+	EndIf
+
+	$sHostsContent = StringRegExpReplace($sHostsContent, "(?s)" & $sMarkerStart & ".*?" & $sMarkerEnd, "")
+
+	Local $hTempFile = FileOpen($sTempHosts, 2)
+	If $hTempFile = -1 Then
+		MemoWrite("Error creating temp hosts file for removal." & @CRLF)
+		Return False
+	EndIf
+	FileWrite($hTempFile, $sHostsContent)
+	FileClose($hTempFile)
+
+	MemoWrite("Temp file created at: " & $sTempHosts & @CRLF)
+	MemoWrite("Temp file content:" & @CRLF & FileRead($sTempHosts) & @CRLF)
+
+	If Not FileCopy($sTempHosts, $sHostsPath, 1) Then
+		MemoWrite("Error writing updated hosts file." & @CRLF)
+		MemoWrite("Attempting to copy from: " & $sTempHosts & " to: " & $sHostsPath & @CRLF)
+		FileDelete($sTempHosts)
+		Return False
+	EndIf
+	FileDelete($sTempHosts)
+
+	FileSetAttrib($sHostsPath, "+R")
+
+	LogWrite(1, "Hosts file cleaned of existing entries." & @CRLF)
+	ToggleLog(1)
+	Return True
+EndFunc   ;==>RemoveHostsEntries
 
 Func BlockPopUp()
-	GUICtrlSetState($idBtnBlockPopUp, 128)
 	_GUICtrlTab_SetCurFocus($hTab, 3)
+	RemoveHostsEntries()
+	GUICtrlSetState($idBtnBlockPopUp, $GUI_DISABLE)
+	MemoWrite(@CRLF & "Updating Hosts File..." & @CRLF)
 
-	MemoWrite(@CRLF & "Checking for Internet connectivity" & @CRLF & "---" & @CRLF & "Please wait...")
-	Local $sCmdInfo = "PowerShell Set-ExecutionPolicy Bypass -scope Process -Force;(Get-NetRoute | Where-Object DestinationPrefix -eq '0.0.0.0/0' | Get-NetIPInterface | Where-Object ConnectionState -eq 'Connected') -ne $null"
-	Local $iPID = Run($sCmdInfo, "", @SW_HIDE, BitOR($STDERR_CHILD, $STDOUT_CHILD))
-	Local $sIPs = ""
-	Local $sOutput = ""
-	Local $bAbort = False
-	While 1
-		$sOutput &= StdoutRead($iPID)
-		If @error Then ExitLoop
-	WEnd
-	ProcessWaitClose($iPID)
-	;MsgBox(0, "", $sOutput)
-	If StringReplace($sOutput, @CRLF, "") = "True" Then
-		MemoWrite(@CRLF & "Searching for IP Addresses" & @CRLF & "---" & @CRLF & "Please wait...")
-		If $bUseCustomDomains = 1 Then
-			$sCustomDomains = "'" & StringReplace(GUICtrlRead($idCustomDomainsInput), @CRLF, "','") & "'"
-			$sCmdInfo = "PowerShell Set-ExecutionPolicy Bypass -scope Process -Force;$ips=@();$domains=@(" & $sCustomDomains & ");$soa=(Resolve-DnsName -Name ic.adobe.io -Type SOA).PrimaryServer;Do{$ip=(Resolve-DnsName -Name ic.adobe.io -Server $soa).IPAddress;$ips+=$ip;If($ip -eq '0.0.0.0'){Break};If($ip -eq '127.0.0.1'){Break};$ips=$ips|Select-Object -Unique|Sort-Object}While($ips.Count -lt 8);$domains.foreach({$ip=(Resolve-DnsName -Name $_).IPAddress;$ips+=$ip});$ips=$ips|Select-Object -Unique|Sort-Object;$list=$ips -join ',';$list;"
-		Else
-			$sCmdInfo = "PowerShell Set-ExecutionPolicy Bypass -scope Process -Force;$path = Join-Path -Path $env:TEMP -ChildPath pihole.txt;Invoke-WebRequest 'https://a.dove.isdumb.one/pihole.txt' -OutFile $path;$ips=@();$soa=(Resolve-DnsName -Name ic.adobe.io -Type SOA).PrimaryServer;Do{$ip=(Resolve-DnsName -Name ic.adobe.io -Server $soa).IPAddress;$ips+=$ip;If($ip -eq '0.0.0.0'){Break};If($ip -eq '127.0.0.1'){Break};$ips=$ips|Select-Object -Unique|Sort-Object}While($ips.Count -lt 8);[System.IO.File]::ReadLines($path) | ForEach-Object {if($_ -Match 'adobestats.io'){$ip=(Resolve-DnsName -Name $_).IPAddress;$ips+=$ip;}};Remove-Item $path;$ips=$ips|Select-Object -Unique|Sort-Object;$list=$ips -join ',';$list;"
-		EndIf
-		$iPID = Run($sCmdInfo, "", @SW_HIDE, BitOR($STDERR_CHILD, $STDOUT_CHILD))
-		$sOutput = ""
-		While 1
-			$sOutput &= StdoutRead($iPID)
-			If @error Then ExitLoop
-		WEnd
-		ProcessWaitClose($iPID)
-		$sIPs = StringReplace($sOutput, @CRLF, "")
-		If StringInStr($sIPs, "0.0.0.0") Or StringInStr($sIPs, "127.0.0.1") Then
-			LogWrite(1, "Detected 0.0.0.0/127.0.0.1 in IP address list. This means your host file contains Adobe domains. Please remove them and try again. No changes have been made to firewall rules!" & @CRLF)
-			$bAbort = True
-			ToggleLog(1)
-		EndIf
-		If $sIPs = "" Then
-			LogWrite(1, "Something went wrong! No Genuine IP addresses found. This means your host file contains Adobe rules like 127.0.0.1 ic.adobe.io. Please remove them and try again. No changes have been made to firewall rules!" & @CRLF)
-			$bAbort = True
-			ToggleLog(1)
-		EndIf
-		$sCmdInfo = "PowerShell Set-ExecutionPolicy Bypass -scope Process -Force;$fws = Get-CimInstance -ClassName FirewallProduct -Namespace 'root\SecurityCenter2';if(!$fws){Write-Output 'Windows'}else{$fws | ForEach-Object {Write-Output $_.displayName}}"
-		$iPID = Run($sCmdInfo, "", @SW_HIDE, BitOR($STDERR_CHILD, $STDOUT_CHILD))
-		$sOutput = ""
-		While 1
-			$sOutput &= StdoutRead($iPID)
-			If @error Then ExitLoop
-		WEnd
-		ProcessWaitClose($iPID)
-		If StringReplace($sOutput, @CRLF, "") = "Windows" Then
-			MemoWrite(@CRLF & "Creating Windows Firewall Rule" & @CRLF & "---" & @CRLF & "Blocking:" & @CRLF & $sIPs)
+	Local $sHostsPath = @WindowsDir & "\System32\drivers\etc\hosts"
+	Local $sBackupPath = $sHostsPath & ".bak"
+	Local $sMarkerStart = "# START - Adobe Blocklist"
+	Local $sMarkerEnd = "# END - Adobe Blocklist"
+	Local $sDomainListURL = $sCurrentDomainListURL
+	Local $sTempFileDownload, $sDomainList, $sHostsContent, $hFile
 
-			If $bAbort = False Then
-				$sCmdInfo = "netsh advfirewall firewall delete rule name=""Adobe Unlicensed Pop-up"""
-				$iPID = Run($sCmdInfo, "", @SW_HIDE, BitOR($STDERR_CHILD, $STDOUT_CHILD))
-				ProcessWaitClose($iPID)
-				$sCmdInfo = "netsh advfirewall firewall add rule name=""Adobe Unlicensed Pop-up"" dir=out action=block remoteip=""" & $sIPs & """"
-				$iPID = Run($sCmdInfo, "", @SW_HIDE, BitOR($STDERR_CHILD, $STDOUT_CHILD))
-				ProcessWaitClose($iPID)
-				LogWrite(1, "Windows Firewall Rule added, blocking:" & @CRLF & @CRLF & StringReplace($sIPs, ",", @CRLF) & @CRLF)
-			EndIf
-			ToggleLog(1)
-		Else
-			If $bAbort = False Then
-				LogWrite(1, "Detected 3rd party firewall: " & $sOutput & "---" & @CRLF & "This will disable Windows Firewall, so you will have to manually create an OUTBOUND rule in " & StringReplace($sOutput, @CRLF, "") & " to block the following IP addresses: " & @CRLF & @CRLF & StringReplace($sIPs, ",", @CRLF) & @CRLF)
-			Else
-				LogWrite(0, "Detected 3rd party firewall: " & $sOutput & "---" & @CRLF & "This will disable Windows Firewall, so you will have to manually create an OUTBOUND rule in " & StringReplace($sOutput, @CRLF, "") & " to block pop-ups from Adobe domains." & @CRLF)
-			EndIf
-			ToggleLog(1)
+	FileSetAttrib($sHostsPath, "-R")
+
+	If Not FileExists($sBackupPath) Then
+		If Not FileCopy($sHostsPath, $sBackupPath, 1) Then
+			MemoWrite("Error creating hosts backup." & @CRLF)
+			GUICtrlSetState($idBtnBlockPopUp, $GUI_ENABLE)
+			FileSetAttrib($sHostsPath, "+R")
+			Return
 		EndIf
-	Else
-		LogWrite(1, "No Internet Connectivity" & @CRLF & "---" & @CRLF & "Powershell was unable to connect to the Internet to fetch current IP addresses. Check you are not blocking it with a firewall." & @CRLF)
-		ToggleLog(1)
-		GUICtrlSetState($idBtnBlockPopUp, 64)
+		MemoWrite("Hosts file backed up." & @CRLF)
 	EndIf
+
+	$sTempFileDownload = _TempFile(@TempDir & "\domain_list")
+	Local $iInetResult = InetGet($sDomainListURL, $sTempFileDownload, 1)
+	If @error Or $iInetResult = 0 Then
+		MemoWrite("Download Error: " & @error & ", InetGet Result: " & $iInetResult & @CRLF)
+		FileDelete($sTempFileDownload)
+		GUICtrlSetState($idBtnBlockPopUp, $GUI_ENABLE)
+		FileSetAttrib($sHostsPath, "+R")
+		Return
+	EndIf
+	$sDomainList = FileRead($sTempFileDownload)
+	FileDelete($sTempFileDownload)
+	MemoWrite("Downloaded list:" & @CRLF & $sDomainList & @CRLF)
+
+	$sHostsContent = FileRead($sHostsPath)
+	If @error Then
+		MemoWrite("Error reading hosts file." & @CRLF)
+		GUICtrlSetState($idBtnBlockPopUp, $GUI_ENABLE)
+		FileSetAttrib($sHostsPath, "+R")
+		Return
+	EndIf
+
+	Local $sNewContent = $sMarkerStart & @CRLF & $sDomainList & @CRLF & $sMarkerEnd
+
+	Local $hFile = FileOpen($sHostsPath, 17)
+	If $hFile = -1 Then
+		Local $iLastError = _WinAPI_GetLastError()
+		MemoWrite("Error opening hosts file for appending: Last Error = " & $iLastError & @CRLF)
+		GUICtrlSetState($idBtnBlockPopUp, $GUI_ENABLE)
+		FileSetAttrib($sHostsPath, "+R")
+		Return
+	EndIf
+
+	If FileGetSize($sHostsPath) > 0 Then
+		FileWrite($hFile, $sNewContent)
+	Else
+		FileWrite($hFile, $sNewContent)
+	EndIf
+	FileClose($hFile)
+
+	FileSetAttrib($sHostsPath, "+R")
+	LogWrite(1, "Hosts file updated successfully." & @CRLF)
+	ToggleLog(1)
+	GUICtrlSetState($idBtnBlockPopUp, $GUI_ENABLE)
 EndFunc   ;==>BlockPopUp
 
 ;---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1358,206 +1353,148 @@ Func _ListView_RightClick()
 EndFunc   ;==>_ListView_RightClick
 
 Func _Assign_Groups_To_Found_Files()
-
-	;_GUICtrlListView_RemoveAllGroups ( $idListview )
+	ConsoleWrite("Entering _Assign_Groups_To_Found_Files()" & @CRLF)
 	Local $MyListItemCount = _GUICtrlListView_GetItemCount($idListview)
+	ConsoleWrite("Item Count in ListView: " & $MyListItemCount & @CRLF)
 	Local $ItemFromList
+	Local $aGroups[0]
+	Local $iGroupID = 1
 
-	;MsgBox(-1,"ItemCount",_GUICtrlListView_GetItemCount($idListview))
-	;MsgBox(-1,"GroupCount",_GUICtrlListView_GetGroupCount($idListview))
+	ReDim $g_aGroupIDs[0]
 
 	For $i = 0 To $MyListItemCount - 1
-		_GUICtrlListView_SetItemChecked($idListview, $i)
-
-		; Build groups
 		$ItemFromList = _GUICtrlListView_GetItemText($idListview, $i, 1)
+		ConsoleWrite("Item Text (Column 2): " & $ItemFromList & @CRLF)
 
+		Local $sGroupName = ""
 		Select
+			Case StringInStr($ItemFromList, "AppsPanel") Or StringInStr($ItemFromList, "Adobe Desktop Service") Or StringInStr($ItemFromList, "HDPIM")
+				$sGroupName = "Creative Cloud"
 			Case StringInStr($ItemFromList, "Acrobat")
-				_GUICtrlListView_InsertGroup($idListview, $i, 1, "", 1)
-				_GUICtrlListView_SetItemGroupID($idListview, $i, 1)
-				_GUICtrlListView_SetGroupInfo($idListview, 1, "Acrobat", 1, $LVGS_COLLAPSIBLE)
-
+				$sGroupName = "Acrobat"
 			Case StringInStr($ItemFromList, "Aero")
-				_GUICtrlListView_InsertGroup($idListview, $i, 2, "", 1)
-				_GUICtrlListView_SetItemGroupID($idListview, $i, 2)
-				_GUICtrlListView_SetGroupInfo($idListview, 2, "Aero", 1, $LVGS_COLLAPSIBLE)
-
+				$sGroupName = "Aero"
 			Case StringInStr($ItemFromList, "After Effects")
-				_GUICtrlListView_InsertGroup($idListview, $i, 3, "", 1)
-				_GUICtrlListView_SetItemGroupID($idListview, $i, 3)
-				_GUICtrlListView_SetGroupInfo($idListview, 3, "After Effects", 1, $LVGS_COLLAPSIBLE)
-
-
+				$sGroupName = "After Effects"
 			Case StringInStr($ItemFromList, "Animate")
-				_GUICtrlListView_InsertGroup($idListview, $i, 4, "", 1)
-				_GUICtrlListView_SetItemGroupID($idListview, $i, 4)
-				_GUICtrlListView_SetGroupInfo($idListview, 4, "Animate", 1, $LVGS_COLLAPSIBLE)
-
-
+				$sGroupName = "Animate"
 			Case StringInStr($ItemFromList, "Audition")
-				_GUICtrlListView_InsertGroup($idListview, $i, 5, "", 1)
-				_GUICtrlListView_SetItemGroupID($idListview, $i, 5)
-				_GUICtrlListView_SetGroupInfo($idListview, 5, "Audition", 1, $LVGS_COLLAPSIBLE)
-
+				$sGroupName = "Audition"
 			Case StringInStr($ItemFromList, "Adobe Bridge")
-				_GUICtrlListView_InsertGroup($idListview, $i, 6, "", 1)
-				_GUICtrlListView_SetItemGroupID($idListview, $i, 6)
-				_GUICtrlListView_SetGroupInfo($idListview, 6, "Bridge", 1, $LVGS_COLLAPSIBLE)
-
+				$sGroupName = "Bridge"
 			Case StringInStr($ItemFromList, "Character Animator")
-				_GUICtrlListView_InsertGroup($idListview, $i, 7, "", 1)
-				_GUICtrlListView_SetItemGroupID($idListview, $i, 7)
-				_GUICtrlListView_SetGroupInfo($idListview, 7, "Character Animator", 1, $LVGS_COLLAPSIBLE)
-
-
-			Case StringInStr($ItemFromList, "AppsPanel")
-				_GUICtrlListView_InsertGroup($idListview, $i, 8, "", 1)
-				_GUICtrlListView_SetItemGroupID($idListview, $i, 8)
-				_GUICtrlListView_SetGroupInfo($idListview, 8, "Creative Cloud", 1, $LVGS_COLLAPSIBLE)
-
-			Case StringInStr($ItemFromList, "Adobe Desktop Service")
-				_GUICtrlListView_InsertGroup($idListview, $i, 8, "", 1)
-				_GUICtrlListView_SetItemGroupID($idListview, $i, 8)
-				_GUICtrlListView_SetGroupInfo($idListview, 8, "Creative Cloud", 1, $LVGS_COLLAPSIBLE)
-
+				$sGroupName = "Character Animator"
 			Case StringInStr($ItemFromList, "Dimension")
-				_GUICtrlListView_InsertGroup($idListview, $i, 9, "", 1)
-				_GUICtrlListView_SetItemGroupID($idListview, $i, 9)
-				_GUICtrlListView_SetGroupInfo($idListview, 9, "Dimension", 1, $LVGS_COLLAPSIBLE)
-
+				$sGroupName = "Dimension"
 			Case StringInStr($ItemFromList, "Dreamweaver")
-				_GUICtrlListView_InsertGroup($idListview, $i, 10, "", 1)
-				_GUICtrlListView_SetItemGroupID($idListview, $i, 10)
-				_GUICtrlListView_SetGroupInfo($idListview, 10, "Dreamweaver", 1, $LVGS_COLLAPSIBLE)
-
+				$sGroupName = "Dreamweaver"
 			Case StringInStr($ItemFromList, "Illustrator")
-				_GUICtrlListView_InsertGroup($idListview, $i, 11, "", 1)
-				_GUICtrlListView_SetItemGroupID($idListview, $i, 11)
-				_GUICtrlListView_SetGroupInfo($idListview, 11, "Illustrator", 1, $LVGS_COLLAPSIBLE)
-
+				$sGroupName = "Illustrator"
 			Case StringInStr($ItemFromList, "InCopy")
-				_GUICtrlListView_InsertGroup($idListview, $i, 12, "", 1)
-				_GUICtrlListView_SetItemGroupID($idListview, $i, 12)
-				_GUICtrlListView_SetGroupInfo($idListview, 12, "InCopy", 1, $LVGS_COLLAPSIBLE)
-
+				$sGroupName = "InCopy"
 			Case StringInStr($ItemFromList, "InDesign")
-				_GUICtrlListView_InsertGroup($idListview, $i, 13, "", 1)
-				_GUICtrlListView_SetItemGroupID($idListview, $i, 13)
-				_GUICtrlListView_SetGroupInfo($idListview, 13, "InDesign", 1, $LVGS_COLLAPSIBLE)
-
+				$sGroupName = "InDesign"
 			Case StringInStr($ItemFromList, "Lightroom CC")
-				_GUICtrlListView_InsertGroup($idListview, $i, 14, "", 1)
-				_GUICtrlListView_SetItemGroupID($idListview, $i, 14)
-				_GUICtrlListView_SetGroupInfo($idListview, 14, "Lightroom CC", 1, $LVGS_COLLAPSIBLE)
-
+				$sGroupName = "Lightroom CC"
 			Case StringInStr($ItemFromList, "Lightroom Classic")
-				_GUICtrlListView_InsertGroup($idListview, $i, 15, "", 1)
-				_GUICtrlListView_SetItemGroupID($idListview, $i, 15)
-				_GUICtrlListView_SetGroupInfo($idListview, 15, "Lightroom Classic", 1, $LVGS_COLLAPSIBLE)
-
+				$sGroupName = "Lightroom Classic"
 			Case StringInStr($ItemFromList, "Media Encoder")
-				_GUICtrlListView_InsertGroup($idListview, $i, 16, "", 1)
-				_GUICtrlListView_SetItemGroupID($idListview, $i, 16)
-				_GUICtrlListView_SetGroupInfo($idListview, 16, "Media Encoder", 1, $LVGS_COLLAPSIBLE)
-
+				$sGroupName = "Media Encoder"
 			Case StringInStr($ItemFromList, "Photoshop")
-				_GUICtrlListView_InsertGroup($idListview, $i, 17, "", 1)
-				_GUICtrlListView_SetItemGroupID($idListview, $i, 17)
-				_GUICtrlListView_SetGroupInfo($idListview, 17, "Photoshop", 1, $LVGS_COLLAPSIBLE)
-
+				$sGroupName = "Photoshop"
 			Case StringInStr($ItemFromList, "Premiere Pro")
-				_GUICtrlListView_InsertGroup($idListview, $i, 18, "", 1)
-				_GUICtrlListView_SetItemGroupID($idListview, $i, 18)
-				_GUICtrlListView_SetGroupInfo($idListview, 18, "Premiere Pro", 1, $LVGS_COLLAPSIBLE)
-
+				$sGroupName = "Premiere Pro"
 			Case StringInStr($ItemFromList, "Premiere Rush")
-				_GUICtrlListView_InsertGroup($idListview, $i, 19, "", 1)
-				_GUICtrlListView_SetItemGroupID($idListview, $i, 19)
-				_GUICtrlListView_SetGroupInfo($idListview, 19, "Premiere Rush", 1, $LVGS_COLLAPSIBLE)
-
+				$sGroupName = "Premiere Rush"
 			Case StringInStr($ItemFromList, "Substance 3D Designer")
-				_GUICtrlListView_InsertGroup($idListview, $i, 20, "", 1)
-				_GUICtrlListView_SetItemGroupID($idListview, $i, 20)
-				_GUICtrlListView_SetGroupInfo($idListview, 20, "Substance 3D Designer", 1, $LVGS_COLLAPSIBLE)
-
+				$sGroupName = "Substance 3D Designer"
 			Case StringInStr($ItemFromList, "Substance 3D Modeler")
-				_GUICtrlListView_InsertGroup($idListview, $i, 21, "", 1)
-				_GUICtrlListView_SetItemGroupID($idListview, $i, 21)
-				_GUICtrlListView_SetGroupInfo($idListview, 21, "Substance 3D Modeler", 1, $LVGS_COLLAPSIBLE)
-
+				$sGroupName = "Substance 3D Modeler"
 			Case StringInStr($ItemFromList, "Substance 3D Painter")
-				_GUICtrlListView_InsertGroup($idListview, $i, 22, "", 1)
-				_GUICtrlListView_SetItemGroupID($idListview, $i, 22)
-				_GUICtrlListView_SetGroupInfo($idListview, 22, "Substance 3D Painter", 1, $LVGS_COLLAPSIBLE)
-
+				$sGroupName = "Substance 3D Painter"
 			Case StringInStr($ItemFromList, "Substance 3D Sampler")
-				_GUICtrlListView_InsertGroup($idListview, $i, 23, "", 1)
-				_GUICtrlListView_SetItemGroupID($idListview, $i, 23)
-				_GUICtrlListView_SetGroupInfo($idListview, 23, "Substance 3D Sampler", 1, $LVGS_COLLAPSIBLE)
-
+				$sGroupName = "Substance 3D Sampler"
 			Case StringInStr($ItemFromList, "Substance 3D Stager")
-				_GUICtrlListView_InsertGroup($idListview, $i, 24, "", 1)
-				_GUICtrlListView_SetItemGroupID($idListview, $i, 24)
-				_GUICtrlListView_SetGroupInfo($idListview, 24, "Substance 3D Stager", 1, $LVGS_COLLAPSIBLE)
-
-			Case StringInStr($ItemFromList, "Adobe.Fresco")
-				_GUICtrlListView_InsertGroup($idListview, $i, 25, "", 1)
-				_GUICtrlListView_SetItemGroupID($idListview, $i, 25)
-				_GUICtrlListView_SetGroupInfo($idListview, 25, "Fresco", 1, $LVGS_COLLAPSIBLE)
-
-			Case StringInStr($ItemFromList, "Adobe.XD")
-				_GUICtrlListView_InsertGroup($idListview, $i, 26, "", 1)
-				_GUICtrlListView_SetItemGroupID($idListview, $i, 26)
-				_GUICtrlListView_SetGroupInfo($idListview, 26, "XD", 1, $LVGS_COLLAPSIBLE)
-
-			Case StringInStr($ItemFromList, "PhotoshopExpress")
-				_GUICtrlListView_InsertGroup($idListview, $i, 27, "", 1)
-				_GUICtrlListView_SetItemGroupID($idListview, $i, 27)
-				_GUICtrlListView_SetGroupInfo($idListview, 27, "PhotoshopExpress", 1, $LVGS_COLLAPSIBLE)
-
+				$sGroupName = "Substance 3D Stager"
+			Case StringInStr($ItemFromList, "Substance 3D Viewer")
+				$sGroupName = "Substance 3D Viewer"
 			Case Else
-				_GUICtrlListView_InsertGroup($idListview, $i, 28, "", 1)
-				_GUICtrlListView_SetItemGroupID($idListview, $i, 28)
-				_GUICtrlListView_SetGroupInfo($idListview, 28, "Else", 1, $LVGS_COLLAPSIBLE)
+				$sGroupName = "Else"
 		EndSelect
+
+		ConsoleWrite("Group Name Assigned: " & $sGroupName & @CRLF)
+
+		Local $iGroupIndex = _ArraySearch($aGroups, $sGroupName)
+		If $iGroupIndex = -1 Then
+			_ArrayAdd($aGroups, $sGroupName)
+			_GUICtrlListView_InsertGroup($idListview, $i, $iGroupID, "", 1)
+			_GUICtrlListView_SetItemGroupID($idListview, $i, $iGroupID)
+			_GUICtrlListView_SetGroupInfo($idListview, $iGroupID, $sGroupName, 1, $LVGS_COLLAPSIBLE)
+			_ArrayAdd($g_aGroupIDs, $iGroupID)
+			ConsoleWrite("New Group Created - ID: " & $iGroupID & @CRLF)
+			$iGroupID += 1
+		Else
+			_GUICtrlListView_SetItemGroupID($idListview, $i, $iGroupIndex + 1)
+			ConsoleWrite("Assigned to Existing Group: " & $sGroupName & " (ID: " & $iGroupIndex + 1 & ")" & @CRLF)
+		EndIf
 	Next
 
-	;MsgBox(-1,"ItemCount",_GUICtrlListView_GetItemCount($idListview))
-	;MsgBox(-1,"GroupCount",_GUICtrlListView_GetGroupCount($idListview))
+	For $i = 0 To $MyListItemCount - 1
+		_GUICtrlListView_SetItemChecked($idListview, $i, 1)
+	Next
 
+	ConsoleWrite("Exiting _Assign_Groups_To_Found_Files()" & @CRLF)
+	ConsoleWrite("Number of Groups in $g_aGroupIDs: " & UBound($g_aGroupIDs) & @CRLF)
+	For $i = 0 To UBound($g_aGroupIDs) - 1
+		ConsoleWrite("Group ID in $g_aGroupIDs: " & $g_aGroupIDs[$i] & @CRLF)
+	Next
 EndFunc   ;==>_Assign_Groups_To_Found_Files
 
 Func _Collapse_All_Click()
-	Local $aInfo, $aCount = _GUICtrlListView_GetGroupCount($idListview) ; Group Count
+	Local $aInfo, $aCount = _GUICtrlListView_GetGroupCount($idListview)
 	If $aCount > 0 Then
 		If $MyLVGroupIsExpanded = 1 Then
-			; Change group information
-			For $i = 1 To 28
+			_SendMessageL($idListview, $WM_SETREDRAW, False, 0)
+
+			For $i = 1 To 25
 				$aInfo = _GUICtrlListView_GetGroupInfo($idListview, $i)
-				_GUICtrlListView_SetGroupInfo($idListview, $i, $aInfo[0], $aInfo[1], $LVGS_COLLAPSED)
+				If IsArray($aInfo) Then
+					_GUICtrlListView_SetGroupInfo($idListview, $i, $aInfo[0], $aInfo[1], $LVGS_COLLAPSED)
+				EndIf
 			Next
+			_SendMessageL($idListview, $WM_SETREDRAW, True, 0)
+			_RedrawWindow($idListview)
 		Else
 			_Expand_All_Click()
 		EndIf
 		$MyLVGroupIsExpanded = Not $MyLVGroupIsExpanded
 	EndIf
-
 EndFunc   ;==>_Collapse_All_Click
 
-
 Func _Expand_All_Click()
-	Local $aInfo, $aCount = _GUICtrlListView_GetGroupCount($idListview) ; Group Count
+	Local $aInfo, $aCount = _GUICtrlListView_GetGroupCount($idListview)
 	If $aCount > 0 Then
-		; Change group information
-		For $i = 1 To 28
-			$aInfo = _GUICtrlListView_GetGroupInfo($idListview, $i)
-			_GUICtrlListView_SetGroupInfo($idListview, $i, $aInfo[0], $aInfo[1], $LVGS_NORMAL)
-			_GUICtrlListView_SetGroupInfo($idListview, $i, $aInfo[0], $aInfo[1], $LVGS_COLLAPSIBLE)
-		Next
-	EndIf
+		_SendMessageL($idListview, $WM_SETREDRAW, False, 0)
 
+		For $i = 1 To 25
+			$aInfo = _GUICtrlListView_GetGroupInfo($idListview, $i)
+			If IsArray($aInfo) Then
+				_GUICtrlListView_SetGroupInfo($idListview, $i, $aInfo[0], $aInfo[1], $LVGS_NORMAL)
+				_GUICtrlListView_SetGroupInfo($idListview, $i, $aInfo[0], $aInfo[1], $LVGS_COLLAPSIBLE)
+			EndIf
+		Next
+		_SendMessageL($idListview, $WM_SETREDRAW, True, 0)
+		_RedrawWindow($idListview)
+	EndIf
 EndFunc   ;==>_Expand_All_Click
+
+Func _SendMessageL($hWnd, $Msg, $wParam, $lParam)
+	Return DllCall("user32.dll", "LRESULT", "SendMessageW", "HWND", GUICtrlGetHandle($hWnd), "UINT", $Msg, "WPARAM", $wParam, "LPARAM", $lParam)[0]
+EndFunc   ;==>_SendMessageL
+
+Func _RedrawWindow($hWnd)
+	DllCall("user32.dll", "bool", "RedrawWindow", "hwnd", GUICtrlGetHandle($hWnd), "ptr", 0, "ptr", 0, "uint", 0x0100)
+EndFunc   ;==>_RedrawWindow
 
 Func WM_COMMAND($hWnd, $Msg, $wParam, $lParam)
 	If BitAND($wParam, 0x0000FFFF) = $idButtonStop Then $fInterrupt = 1
@@ -1572,22 +1509,18 @@ Func WM_NOTIFY($hWnd, $iMsg, $wParam, $lParam)
 	Switch $hWndFrom
 		Case $g_idListview
 			Switch $iCode
-				Case $LVN_COLUMNCLICK ; A column was clicked
+				Case $LVN_COLUMNCLICK
 					_Collapse_All_Click()
-					; No return value
-				Case $NM_CLICK ; Sent by a list-view control when the user clicks an item with the left mouse button
+				Case $NM_CLICK
 					_ListView_LeftClick($g_idListview, $lParam)
-					; No return value
-				Case $NM_RCLICK ; Sent by a list-view control when the user clicks an item with the right mouse button
+				Case $NM_RCLICK
 					_ListView_RightClick()
-					; No return value
 			EndSwitch
 	EndSwitch
 	Return $GUI_RUNDEFMSG
 EndFunc   ;==>WM_NOTIFY
 
 Func _Exit()
-	FileDelete(@WindowsDir & "\Temp\RunAsTI.exe")
 	Exit
 EndFunc   ;==>_Exit
 
@@ -1622,7 +1555,6 @@ EndFunc   ;==>_IsChecked
 
 
 Func SaveOptionsToConfig()
-
 	If _IsChecked($idFindACC) Then
 		IniWrite($sINIPath, "Options", "FindACC", "1")
 	Else
@@ -1638,57 +1570,138 @@ Func SaveOptionsToConfig()
 	Else
 		IniWrite($sINIPath, "Options", "OnlyAdobeFolders", "0")
 	EndIf
-	If _IsChecked($idUseCustomDomains) Then
-		IniWrite($sINIPath, "Options", "UseCustomDomains", "1")
-	Else
-		IniWrite($sINIPath, "Options", "UseCustomDomains", "0")
-	EndIf
-	If Not StringInStr(GUICtrlRead($idCustomDomainsInput), ".adobestats.io") Then
-		IniWrite($sINIPath, "Options", "CustomDomains", "'8eptecerpq.adobestats.io','xa8g202i4u.adobestats.io'")
-		GUICtrlSetData($idCustomDomainsInput, "8eptecerpq.adobestats.io" & @CRLF & "xa8g202i4u.adobestats.io")
-		$sCustomDomains = "'8eptecerpq.adobestats.io','xa8g202i4u.adobestats.io'"
-	Else
-		IniWrite($sINIPath, "Options", "CustomDomains", """'" & StringReplace(GUICtrlRead($idCustomDomainsInput), @CRLF, "','") & "'""")
+
+	Local $sNewDomainListURL = StringStripWS(GUICtrlRead($idCustomDomainListInput), 1)
+
+	If $sNewDomainListURL = "" Then
+		$sNewDomainListURL = $sDefaultDomainListURL
+		GUICtrlSetData($idCustomDomainListInput, $sNewDomainListURL)
+		MsgBox(0, "Empty URL", "The custom domain list URL cannot be empty. Default URL set.")
 	EndIf
 
+	If $sNewDomainListURL <> $sCurrentDomainListURL Then
+		IniWrite($sINIPath, "Options", "CustomDomainListURL", $sNewDomainListURL)
+		$sCurrentDomainListURL = $sNewDomainListURL
+	EndIf
 EndFunc   ;==>SaveOptionsToConfig
 
-Func DestroyAGS()
-	GUICtrlSetState($idBtnDestroyAGS, 128)
+;---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Func RemoveAGS()
+	GUICtrlSetState($idBtnRemoveAGS, 128)
 	_GUICtrlTab_SetCurFocus($hTab, 3)
 
 	MemoWrite(@CRLF & "Removing AGS from this Computer" & @CRLF & "---" & @CRLF & "Please wait...")
 
-	$sCmdInfo = "PowerShell Set-ExecutionPolicy Bypass -scope Process -Force;"
+	Local $aServicesToStop = ["AGMService", "AGSService"]
+	For $sServiceName In $aServicesToStop
+		If AGSServiceExists($sServiceName) Then
+			If StopAGSService($sServiceName) Then
+				LogWrite(1, $sServiceName & " stopped successfully.")
+			Else
+				LogWrite(1, "Failed to stop service: " & $sServiceName)
+			EndIf
 
-	$sCmdInfo &= "Stop-Process -Name ""AGMService"" -Force -ErrorAction SilentlyContinue;"
-	$sCmdInfo &= "Stop-Process -Name ""AGSService"" -Force -ErrorAction SilentlyContinue;"
-	$sCmdInfo &= "Remove-Item -Path ""C:\Program Files (x86)\Common Files\Adobe\AdobeGCClient"" -Recurse -Force -ErrorAction SilentlyContinue;"
-	$sCmdInfo &= "Remove-Item -Path ""C:\Program Files (x86)\Common Files\Adobe\OOBE\PDApp\AdobeGCClient"" -Recurse -Force -ErrorAction SilentlyContinue;"
-	$sCmdInfo &= "sc.exe delete ""AGMService"";"
-	$sCmdInfo &= "sc.exe delete ""AGSService"";"
-	$sCmdInfo &= "Remove-Item -Path ""C:\Users\Public\Documents\AdobeGCData"" -Recurse -Force -ErrorAction SilentlyContinue;"
-	$sCmdInfo &= "Remove-Item -Path ""C:\Windows\System32\Tasks\AdobeGCInvoker-1.0"" -Force -ErrorAction SilentlyContinue;"
-	$sCmdInfo &= "Remove-Item -Path ""C:\Windows\System32\Tasks_Migrated\AdobeGCInvoker-1.0"" -Force -ErrorAction SilentlyContinue;"
-	$sCmdInfo &= "Remove-Item -Path ""C:\Program Files (x86)\Adobe\Adobe Creative Cloud\Utils\AdobeGenuineValidator.exe"" -Force -ErrorAction SilentlyContinue;"
-	$sCmdInfo &= "Remove-Item -Path ""C:\Windows\Temp\adobegc.log"" -Force -ErrorAction SilentlyContinue;"
-	$sCmdInfo &= "Remove-Item -Path ""C:\Users\maxfa\AppData\Local\Temp\adobegc.log"" -Force -ErrorAction SilentlyContinue;"
+			If DeleteAGSService($sServiceName) Then
+				LogWrite(1, $sServiceName & " deleted successfully.")
+			Else
+				LogWrite(1, "Failed to delete service: " & $sServiceName)
+			EndIf
+		Else
+			LogWrite(1, "Service not found: " & $sServiceName)
+		EndIf
+	Next
 
-	Local $iPID = Run($sCmdInfo, "", @SW_HIDE, BitOR($STDERR_CHILD, $STDOUT_CHILD))
-	Local $sOutput = ""
-	While 1
-		$sOutput &= StdoutRead($iPID)
-		If @error Then ExitLoop
-	WEnd
-	ProcessWaitClose($iPID)
-	LogWrite(1, "Removing AGS: Commands completed successfully." & @CRLF)
+	DeleteAGSFiles()
+
+	LogWrite(1, "AGS removal completed." & @CRLF)
 	ToggleLog(1)
+EndFunc   ;==>RemoveAGS
 
-EndFunc   ;==>DestroyAGS
+Func StopAGSService($sServiceName)
+	Local $hProcess = Run("sc stop " & $sServiceName, "", @SW_HIDE, $STDOUT_CHILD + $STDERR_CHILD)
+	ProcessWaitClose($hProcess)
+	Local $sOutput = StdoutRead($hProcess)
+
+	If StringRegExp($sOutput, "STATE\s*:\s*3") Then
+		For $i = 1 To 10
+			Sleep(1000)
+			$hProcess = Run("sc query " & $sServiceName, "", @SW_HIDE, $STDOUT_CHILD + $STDERR_CHILD)
+			ProcessWaitClose($hProcess)
+			$sOutput = StdoutRead($hProcess)
+			If StringRegExp($sOutput, "STATE\s*:\s*1") Then
+				Return True
+			EndIf
+		Next
+		Return False ; Timed out
+	ElseIf StringRegExp($sOutput, "STATE\s*:\s*1") Then
+		Return True ; Already stopped
+	Else
+		Return False ; Unexpected output
+	EndIf
+EndFunc   ;==>StopAGSService
+
+Func DeleteAGSService($sServiceName)
+	Local $hProcess = Run("sc delete " & $sServiceName, "", @SW_HIDE, $STDOUT_CHILD + $STDERR_CHILD)
+	ProcessWaitClose($hProcess)
+	Local $sOutput = StdoutRead($hProcess)
+
+	If StringInStr($sOutput, "[SC] DeleteAGSService SUCCESS") Then
+		Return True
+	Else
+		Return False
+	EndIf
+EndFunc   ;==>DeleteAGSService
+
+Func AGSServiceExists($sServiceName)
+	Local $hProcess = Run("sc query " & $sServiceName, "", @SW_HIDE, $STDOUT_CHILD + $STDERR_CHILD)
+	ProcessWaitClose($hProcess)
+	Local $sOutput = StdoutRead($hProcess)
+	Return StringInStr($sOutput, "STATE")
+EndFunc   ;==>AGSServiceExists
+
+Func DeleteAGSFiles()
+	Local $ProgramFilesX86 = EnvGet("ProgramFiles(x86)")
+	Local $PublicDir = EnvGet("PUBLIC")
+	Local $WinDir = @WindowsDir
+	Local $LocalAppData = EnvGet("LOCALAPPDATA")
+
+	Local $aPaths[9]
+	$aPaths[0] = $ProgramFilesX86 & "\Common Files\Adobe\Adobe Desktop Common\AdobeGenuineClient\AGSService.exe"
+	$aPaths[1] = $ProgramFilesX86 & "\Common Files\Adobe\AdobeGCClient"
+	$aPaths[2] = $ProgramFilesX86 & "\Common Files\Adobe\OOBE\PDApp\AdobeGCClient"
+	$aPaths[3] = $PublicDir & "\Documents\AdobeGCData"
+	$aPaths[4] = $WinDir & "\System32\Tasks\AdobeGCInvoker-1.0"
+	$aPaths[5] = $WinDir & "\System32\Tasks_Migrated\AdobeGCInvoker-1.0"
+	$aPaths[6] = $ProgramFilesX86 & "\Adobe\Adobe Creative Cloud\Utils\AdobeGenuineValidator.exe"
+	$aPaths[7] = $WinDir & "\Temp\adobegc.log"
+	$aPaths[8] = $LocalAppData & "\Temp\adobegc.log"
+
+	For $i = 0 To UBound($aPaths) - 1
+		Local $sPath = $aPaths[$i]
+
+		If FileExists($sPath) Then
+			If StringInStr(FileGetAttrib($sPath), "D") Then
+				If DirRemove($sPath, 1) Then
+					LogWrite(1, "Deleted Directory: " & $sPath)
+				Else
+					LogWrite(1, "Failed to delete directory: " & $sPath)
+				EndIf
+			Else
+				FileDelete($sPath)
+				LogWrite(1, "Deleted File: " & $sPath)
+			EndIf
+		Else
+			LogWrite(1, "File or folder not found: " & $sPath)
+		EndIf
+	Next
+EndFunc   ;==>DeleteAGSFiles
+
+;---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Func EditHosts()
-	Local $sHostsPath = "C:\Windows\System32\drivers\etc\hosts"
-	Local $sBackupPath = "C:\Windows\System32\drivers\etc\hosts.bak"
+	Local $sHostsPath = @WindowsDir & "\System32\drivers\etc\hosts"
+	Local $sBackupPath = @WindowsDir & "\System32\drivers\etc\hosts.bak"
 
 	; Remove the read-only attribute
 	FileSetAttrib($sHostsPath, "-R")
@@ -1713,8 +1726,8 @@ EndFunc   ;==>EditHosts
 Func RestoreHosts()
 	_GUICtrlTab_SetCurFocus($hTab, 3)
 	MemoWrite(@CRLF & "Restoring the hosts file from backup..." & @CRLF & "---" & @CRLF & "Please wait..." & @CRLF)
-	Local $sHostsPath = "C:\Windows\System32\drivers\etc\hosts"
-	Local $sBackupPath = "C:\Windows\System32\drivers\etc\hosts.bak"
+	Local $sHostsPath = @WindowsDir & "\System32\drivers\etc\hosts"
+	Local $sBackupPath = @WindowsDir & "\System32\drivers\etc\hosts.bak"
 
 	; If the backup file exists, restore it
 	If FileExists($sBackupPath) Then
@@ -1736,55 +1749,56 @@ Func RestoreHosts()
 	ToggleLog(1)
 EndFunc   ;==>RestoreHosts
 
-Func CleanFirewall()
-	_GUICtrlTab_SetCurFocus($hTab, 3)
-	Local $sCmdInfo = "netsh advfirewall firewall delete rule name=""Adobe Unlicensed Pop-up"""
-	Local $iPID = Run($sCmdInfo, "", @SW_HIDE, BitOR($STDERR_CHILD, $STDOUT_CHILD))
-	Local $sOutput = ""
-	While 1
-		$sOutput &= StdoutRead($iPID)
-		If @error Then ExitLoop
-	WEnd
-	ProcessWaitClose($iPID)
-	LogWrite(1, "Removing Adobe Firewall Blocks:" & @CRLF & $sOutput & @CRLF)
-
-	ToggleLog(1)
-EndFunc   ;==>CleanFirewall
+;Func CleanFirewall()
+;	_GUICtrlTab_SetCurFocus($hTab, 3)
+;	Local $sCmdInfo = "netsh advfirewall firewall delete rule name=""Adobe Unlicensed Pop-up"""
+;	Local $iPID = Run($sCmdInfo, "", @SW_HIDE, BitOR($STDERR_CHILD, $STDOUT_CHILD))
+;	Local $sOutput = ""
+;	While 1
+;		$sOutput &= StdoutRead($iPID)
+;		If @error Then ExitLoop
+;	WEnd
+;	ProcessWaitClose($iPID)
+;	LogWrite(1, "Removing Adobe Firewall Blocks:" & @CRLF & $sOutput & @CRLF)
+;
+;	ToggleLog(1)
+;EndFunc    ;==>CleanFirewall
 
 Func OpenWF()
-	Run("mmc.exe C:\Windows\System32\wf.msc")
+	Local $sWFPath = @SystemDir & "\wf.msc"
+	Run("mmc.exe " & $sWFPath)
 	ConsoleWrite("Opening Windows Firewall...")
 EndFunc   ;==>OpenWF
 
-Func EnableDisableWFRules()
-	_GUICtrlTab_SetCurFocus($hTab, 3)
-	MemoWrite(@CRLF & "Checking state of Windows Firewall Rules..." & @CRLF & "---" & @CRLF & "Please wait...")
-	Local $sCmdInfo = "PowerShell Set-ExecutionPolicy Bypass -scope Process -Force;try{$name = (Get-NetFirewallRule -DisplayName 'Adobe Unlicensed Pop-up').Name} catch{$name='no'};If($name -ne 'no'){(Get-NetFirewallRule -Name $name).Enabled};"
-	Local $iPID = Run($sCmdInfo, "", @SW_HIDE, BitOR($STDERR_CHILD, $STDOUT_CHILD))
-	Local $sOutput = ""
-	While 1
-		$sOutput &= StdoutRead($iPID)
-		If @error Then ExitLoop
-	WEnd
-	ProcessWaitClose($iPID)
-
-	If StringInStr($sOutput, "True") > 0 Then
-		; If the rule is enabled, disable it
-		$sCmdInfo = 'netsh advfirewall firewall set rule name="Adobe Unlicensed Pop-up" new enable=no'
-		$iPID = Run($sCmdInfo, "", @SW_HIDE, BitOR($STDERR_CHILD, $STDOUT_CHILD))
-		LogWrite(1, "Disabling Windows Firewall Rule: Adobe Unlicensed Pop-up" & @CRLF)
-	Else
-		; If the rule is disabled, enable it
-		$sCmdInfo = 'netsh advfirewall firewall set rule name="Adobe Unlicensed Pop-up" new enable=yes'
-		$iPID = Run($sCmdInfo, "", @SW_HIDE, BitOR($STDERR_CHILD, $STDOUT_CHILD))
-		LogWrite(1, "Enabling Windows Firewall Rule: Adobe Unlicensed Pop-up" & @CRLF)
-	EndIf
-	Local $sOutput = ""
-	While 1
-		$sOutput &= StdoutRead($iPID)
-		If @error Then ExitLoop
-	WEnd
-	ProcessWaitClose($iPID)
-	LogWrite(0, "Windows Firewall Rule Status: " & $sOutput & @CRLF)
-	ToggleLog(1)
-EndFunc   ;==>EnableDisableWFRules
+;Func EnableDisableWFRules()
+;	_GUICtrlTab_SetCurFocus($hTab, 3)
+;	MemoWrite(@CRLF & "Checking state of Windows Firewall Rules..." & @CRLF & "---" & @CRLF & "Please wait...")
+;	Local $sCmdInfo = "PowerShell -NoProfile Set-ExecutionPolicy Bypass -scope Process -Force;try{$name = (Get-NetFirewallRule -DisplayName 'Adobe Unlicensed Pop-up').Name} catch{$name='no'};If($name -ne 'no'){(Get-NetFirewallRule -Name $name).Enabled};"
+;	Local $iPID = Run($sCmdInfo, "", @SW_HIDE, BitOR($STDERR_CHILD, $STDOUT_CHILD))
+;	Local $sOutput = ""
+;	While 1
+;		$sOutput &= StdoutRead($iPID)
+;		If @error Then ExitLoop
+;	WEnd
+;	ProcessWaitClose($iPID)
+;
+;	If StringInStr($sOutput, "True") > 0 Then
+;		; If the rule is enabled, disable it
+;		$sCmdInfo = 'netsh advfirewall firewall set rule name="Adobe Unlicensed Pop-up" new enable=no'
+;		$iPID = Run($sCmdInfo, "", @SW_HIDE, BitOR($STDERR_CHILD, $STDOUT_CHILD))
+;		LogWrite(1, "Disabling Windows Firewall Rule: Adobe Unlicensed Pop-up" & @CRLF)
+;	Else
+;		; If the rule is disabled, enable it
+;		$sCmdInfo = 'netsh advfirewall firewall set rule name="Adobe Unlicensed Pop-up" new enable=yes'
+;		$iPID = Run($sCmdInfo, "", @SW_HIDE, BitOR($STDERR_CHILD, $STDOUT_CHILD))
+;		LogWrite(1, "Enabling Windows Firewall Rule: Adobe Unlicensed Pop-up" & @CRLF)
+;	EndIf
+;	Local $sOutput = ""
+;	While 1
+;		$sOutput &= StdoutRead($iPID)
+;		If @error Then ExitLoop
+;	WEnd
+;	ProcessWaitClose($iPID)
+;	LogWrite(0, "Windows Firewall Rule Status: " & $sOutput & @CRLF)
+;	ToggleLog(1)
+;EndFunc    ;==>EnableDisableWFRules
