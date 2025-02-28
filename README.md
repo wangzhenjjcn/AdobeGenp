@@ -52,7 +52,7 @@ AdobeGenp Adobe Adobe CC 2019/2020/2021/2022(test)/2023(test)/2024(test)/2025(te
 [Media Encoder 2025 25.1.0.065 Win_x64](<Media Encoder/2025/Last - Media Encoder 2025 25.1.0.065 Win_x64.txt>)
 
 
-[Photoshop 2025 26.3.0.156 Win64](<Photoshop/2025/Last - Photoshop 2025 26.3.0.156 Win64.txt>)
+[Photoshop 2025 26.4.1.194 Win64](<Photoshop/2025/Last - Photoshop 2025 26.4.1.194 Win64.txt>)
 
 
 [Premiere Pro 2025 25.1.0.073 Winx64](<Premiere Pro/2025/Last - Premiere Pro 2025 25.1.0.073 Winx64.txt>)
