@@ -15,6 +15,9 @@ AdobeGenp Adobe Adobe CC 2019/2020/2021/2022(test)/2023(test)/2024(test)/2025(te
 
 [Acrobat Pro DC 2024.005.20392 Win_x86](<Acrobat Pro DC/2024/Last-Acrobat Pro DC 2024.005.20392 Win_x86.txt>)
 
+[Acrobat Pro DC 2025.001.20428 Win_x86](<Acrobat Pro DC/2025/Last - Acrobat Pro DC 2025.001.20428 WinX86.txt>)
+
+[Acrobat Pro DC 2025.001.20428 Win_x64](<Acrobat Pro DC/2025/Last - Acrobat Pro DC 2025.001.20428 WinX64.txt>)
 
 [Acrobat Reader DC MacOS10.14orLater](<Acrobat Reader DC/2024/MacOS10.14orLater.txt>)
 
