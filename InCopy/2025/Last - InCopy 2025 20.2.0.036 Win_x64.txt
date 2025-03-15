@@ -1,0 +1,11 @@
+InCopy 2025 20.0.1.071 (Preactivated Installer) x64:
+System Requirements:
+– Processor: Intel® Pentium® 4 or AMD Athlon® 64 processor
+– Operating system: Windows 10* (64-bit)
+– RAM: 4 GB of RAM (16 GB recommended)
+– Hard disk space: 3.6 GB of available hard-disk space for installation; additional free space required during installation (cannot install on removable flash storage devices); SSD recommended
+– Monitor resolution: 1024 x 768 display (1920 X 1080 recommended), HiDPI display support
+– Video card: 32-bit video card
+* Not supported on Windows 10 versions 1507, 1511, 1703, and 1709.
+
+https://seyarabata.com/67cf63904ddf5
