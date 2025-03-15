@@ -1,4 +1,4 @@
-InCopy 2025 20.0.1.071 (Preactivated Installer) x64:
+InCopy 2025 20.2.0.036 (Preactivated Installer) x64:
 System Requirements:
 – Processor: Intel® Pentium® 4 or AMD Athlon® 64 processor
 – Operating system: Windows 10* (64-bit)
