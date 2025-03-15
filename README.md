@@ -4,7 +4,7 @@ Please purchase a genuine Adobe license !
 
 AdobeGenp Adobe Adobe CC 2019/2020/2021/2022(test)/2023(test)/2024(test)/2025(test) GenP Universal Patch 2025 - Software  from  cybermania 
 
-[Acrobat](<Acrobat Classic/2024/Last - Acrobat Classic 24.001.30225 Win_x64.txt>)
+[Acrobat](<Acrobat Classic/2024/Last - Acrobat Classic 24.001.30235 Win_x64.txt>)
 
 
 [Acrobat Pro DC 2022.001.20085 Win_x64](<Acrobat Pro DC/2022/Acrobat Pro DC 2022.001.20085 Win_x64.txt>)
@@ -46,10 +46,10 @@ AdobeGenp Adobe Adobe CC 2019/2020/2021/2022(test)/2023(test)/2024(test)/2025(te
 [Illustrator 2025 29.3.0.146 Winx64](<Illustrator/2025/Last - Illustrator 2025 29.3.0.146 Winx64.txt>)
 
 
-[InCopy 2025 20.0.1.071 Win_x64](<InCopy/2025/Last - InCopy 2025 20.0.1.071 Win_x64.txt>)
+[InCopy 2025 20.2.0.036 Win_x64](<InCopy/2025/Last - InCopy 2025 20.2.0.036 Win_x64.txt>)
 
 
-[InDesign 2025 20.0.1.071 Win_x64](<InDesign/2025/Last - InDesign 2025 20.0.1.071 Win_x64.txt>)
+[InDesign 2025 20.2.0.036 Win_x64](<InDesign/2025/Last - InDesign 2025 20.2.0.036 Win_x64.txt>)
 
 
 [Media Encoder 2025 25.1.0.065 Win_x64](<Media Encoder/2025/Last - Media Encoder 2025 25.1.0.065 Win_x64.txt>)
@@ -64,6 +64,6 @@ AdobeGenp Adobe Adobe CC 2019/2020/2021/2022(test)/2023(test)/2024(test)/2025(te
 [hosts](hosts/hosts)
 
 
+[XD 58.0.12.9 win_x64](<XD/Last - XD 58.0.12.9 win_x64.txt>)
 
-
-
+[XD 58.0.12.9 macos_x64](<XD/Last - XD 58.0.12.9 macos x64.txt>)
