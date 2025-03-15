@@ -1,0 +1,16 @@
+XD 58.0.12.9
+
+System Requirements
+
+OS:Windows 10 Creators Update OR higher
+
+CPU:Multicore Intel processor with 64-bit support with 1.4 GHz
+
+Display:1280 x 800
+
+RAM:4 GB of RAM of which 2 GB of available hard-disk space for installation; more free space required during installation
+
+Graphics:Minimum Direct 3D DDI Feature Set: 10. For Intel GPU, drivers released in 2014 or later are necessary. To find this information, launch “dxdiag” from the Runmenu and select the “Display” tab.
+
+
+https://www.mediafire.com/file/yo6o31ee6e0k89i/AdobeXD58.0.12.9x64.7z/file
