@@ -43,8 +43,7 @@ AdobeGenp Adobe Adobe CC 2019/2020/2021/2022(test)/2023(test)/2024(test)/2025(te
 [Character Animator 2024 24.6.0.066 Win_x64](<Character Animator/2024/Win_x64.txt>)
  
 
-[Illustrator 2025 29.3.0.146 Winx64](<Illustrator/2025/Last - Illustrator 2025 29.3.0.146 Winx64.txt>)
-
+[Illustrator 2025 29.4.0.152 Winx64](<Illustrator/2025/Last - Illustrator 2025 29.4.0.152 Winx64.txt>)
 
 [InCopy 2025 20.2.0.036 Win_x64](<InCopy/2025/Last - InCopy 2025 20.2.0.036 Win_x64.txt>)
 
@@ -59,8 +58,7 @@ AdobeGenp Adobe Adobe CC 2019/2020/2021/2022(test)/2023(test)/2024(test)/2025(te
 
 [Photoshop Lightroom Classic 2025 14.2.0.8 Win_x64](<Photoshop Lightroom Classic/2025/Last - Photoshop Lightroom Classic 2025 14.2.0.8 Win_x64.txt>)
 
-[Premiere Pro 2025 25.1.0.073 Winx64](<Premiere Pro/2025/Last - Premiere Pro 2025 25.1.0.073 Winx64.txt>)
-
+[Premiere Pro 2025 25.2.0.147 Winx64](<Premiere Pro/2025/Last - Premiere Pro 2025 25.2.0.147 Winx64>)
 
 [hosts](hosts/hosts)
 
