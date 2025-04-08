@@ -60,9 +60,10 @@ AdobeGenp Adobe Adobe CC 2019/2020/2021/2022(test)/2023(test)/2024(test)/2025(te
 
 [Premiere Pro 2025 25.2.0.147 Winx64](<Premiere Pro/2025/Last - Premiere Pro 2025 25.2.0.147 Winx64>)
 
-[hosts](hosts/hosts)
-
 
 [XD 58.0.12.9 win_x64](<XD/Last - XD 58.0.12.9 win_x64.txt>)
 
 [XD 58.0.12.9 macos_x64](<XD/Last - XD 58.0.12.9 macos x64.txt>)
+
+
+[hosts](hosts/hosts)
