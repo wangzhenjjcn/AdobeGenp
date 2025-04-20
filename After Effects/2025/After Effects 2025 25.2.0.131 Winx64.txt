@@ -1,0 +1,21 @@
+After Effects 2025 25.2.0.131
+(Preactivated Installer) x64
+https://www.mediafire.com/file/f54p965b46mabsk/AdobeAfterEffects2025v25.2.0.131x64.7z/file
+
+
+
+
+
+
+System Requirements:
+– Processor: Multicore Intel processor with 64-bit support
+– Operating system: Microsoft Windows 10 (64 bit) versions 1703 (Creators Update) and later
+– RAM: 8 GB minimum (16 GB recommended)
+– 4 GB of GPU VRAM
+-Hard disk space
+– 5GB of available hard-disk space; additional free space required during installation (cannot install on removable flash storage devices)
+– Additional disk space for disk cache (10GB recommended)
+– Monitor resolution 1280×1080 or greater display resolution
+
+Adobe After Effects is available in the following languages:
+– Deutsch, English, Español, Français, Italiano, Português (Brasil), Русский, 日本語, 한국
