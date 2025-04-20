@@ -4,8 +4,6 @@
 
 AdobeGenp Adobe Adobe CC 2019/2020/2021/2022(test)/2023(test)/2024(test)/2025(test) GenP Universal Patch 2025 - Software  from  cybermania 
 
-[Acrobat](<Acrobat Classic/2024/Last - Acrobat Classic 24.001.30235 Win_x64.txt>)
-
 [Acrobat Pro DC 2022.001.20085 Win_x64](<Acrobat Pro DC/2022/Acrobat Pro DC 2022.001.20085 Win_x64.txt>)
 
 [Acrobat Pro DC 2022.001.20085 Win_x86](<Acrobat Pro DC/2022/Acrobat Pro DC 2022.001.20085 Win_x86.txt>)
