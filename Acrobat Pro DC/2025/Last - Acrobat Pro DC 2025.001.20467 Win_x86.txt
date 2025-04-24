@@ -1,0 +1,20 @@
+Acrobat Pro DC 2025.001.20467
+https://www.mediafire.com/file/tgger4q2l1ftd0a/AdobeAcrobatProDC2025.001.20467x86.exe/file
+
+
+
+System requirements
+Windows OS
+1.5GHz or faster processor
+Windows Server 2008 R2 (32 bit and 64 bit), 2012 (64 bit), or 2012 R2 (64 bit); Windows 7 (32 bit and 64 bit); Windows 8 (32 bit and 64 bit); Windows 10
+1GB of RAM
+380MB of available hard-disk space
+1024×768 screen resolution
+Internet Explorer 8, 9, or 10, 11; Firefox Extended Support Release
+Browser
+These requirements apply to the Acrobat Pro DC subscription plan, and are in addition to the desktop requirements listed above
+Microsoft Windows 10 using Microsoft Edge, Internet Explorer 11, Firefox, or Chrome
+Microsoft Windows 7 using Internet Explorer 11 or later, Firefox, or Chrome
+Mac OS X v10.12 (Sierra) or later using Safari 11 or later, Firefox, or Chrome
+iOS: Native browser based on the iOS release and Chrome
+Android: Native browser that ships with the OS and Chrome
