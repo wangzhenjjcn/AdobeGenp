@@ -23,7 +23,14 @@ Press ‘Pill Button’ – wait until GenP do it’s job.
  
 
 Changelog:
-
+v3.6.4 Changelog:
+– InCopy/InDesign no longer require WinTrust when applying anti-popup patch (thanks @xanax !)
+– Updated/added patches to remove trial expired banners in select apps
+– Removed Acrobat from WinTrust scanning
+– Minor fixes
+v3.6.3 Changelog:
+– Updated previous anti-popup patch to now include Illustrator (thanks @xanax !)
+– Added Acrobat anti-popup patch
 v3.6.2 Changelog:
 – Popup Tools -> Runtime Installer section updated.
 It was brought to my attention that some apps or versions may not like their RuntimeInstaller.dll file being renamed
